@@ -1,6 +1,6 @@
 // Atlas Arcade service worker — offline play + instant repeat loads.
 // Bump CACHE when shipping new assets so clients pick them up.
-const CACHE = "atlas-arcade-v1";
+const CACHE = "atlas-arcade-v2";
 
 // App shell + data needed to boot. Paths are relative to the SW scope, so this
 // works whether the site is served at a domain root or a /repo/ subpath.
@@ -33,8 +33,8 @@ const PRECACHE = [
   "./assets/data/countries.json",
   "./assets/geo/countries-50m.json",
   "./assets/geo/countries-110m.json",
-  "./assets/fonts/fredoka.woff2",
-  "./assets/fonts/nunito.woff2",
+  "./assets/fonts/archivo-black.woff2",
+  "./assets/fonts/inter.woff2",
 ];
 
 self.addEventListener("install", (e) => {
