@@ -1,6 +1,6 @@
 # 🌍 Atlas Arcade
 
-A pastel, arcade-style geography quiz. Name countries from their **flag**, **shape**,
+A bold, arcade-style geography quiz. Name countries from their **flag**, **shape**,
 or where they light up on a spinning **globe**; guess **capitals** with a soft region
 hint; and **locate** places by tapping the globe (Geoguessr-style, scored by distance).
 Answer fast for more points, chain correct answers for a **combo**, and reveal **hints**
@@ -50,7 +50,7 @@ Vanilla JS (ES modules) + D3 (orthographic globe) + TopoJSON, all vendored in
 - `assets/geo/countries-{50m,110m}.json` — country shapes (world-atlas TopoJSON)
 - `assets/flags/*.svg` — one flag per country
 - `assets/social/*` — Open Graph image + PWA icons
-- `assets/fonts/*` — Fredoka + Nunito (variable)
+- `assets/fonts/*` — Archivo Black (display) + Inter (UI)
 
 ### Regenerating the data
 
@@ -70,4 +70,4 @@ Game code is MIT (see [LICENSE](./LICENSE)). Bundled data and assets keep their 
 - Country metadata: [mledoze/countries](https://github.com/mledoze/countries) (ODbL)
 - Capital coordinates: [Natural Earth](https://www.naturalearthdata.com/) populated places (public domain)
 - Flags: [flagcdn.com](https://flagcdn.com)
-- Fonts: Fredoka & Nunito (Open Font License)
+- Fonts: Archivo Black & Inter (Open Font License)

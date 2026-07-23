@@ -11,3 +11,6 @@ scripts/cache/
 Thumbs.db
 .vscode/
 .idea/
+
+# Before/after redesign screenshots (deliverables, not shipped)
+showcase/

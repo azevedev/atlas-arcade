@@ -273,8 +273,9 @@ export function createUI() {
       if (h.mode === "arcade") {
         const total = 3;
         let s = "";
+        // plain glyphs (not emoji) so the theme's --accent/ink colors apply
         for (let i = 0; i < total; i++)
-          s += i < h.lives ? "❤️" : `<span class="dead">🤍</span>`;
+          s += i < h.lives ? "◆" : `<span class="dead">◇</span>`;
         els.lives.innerHTML = s;
         els.lives.hidden = false;
         els.progress.hidden = true;
