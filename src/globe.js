@@ -166,7 +166,7 @@ export class Globe {
     ctx.beginPath();
     path(this.borders);
     ctx.strokeStyle = c.border;
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 0.8;
     ctx.stroke();
 
     // highlighted country (detailed 50m)
