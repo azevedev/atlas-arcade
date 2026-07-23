@@ -1,6 +1,6 @@
 // Atlas Arcade service worker — offline play + instant repeat loads.
 // Bump CACHE when shipping new assets so clients pick them up.
-const CACHE = "atlas-arcade-v2";
+const CACHE = "atlas-arcade-v3";
 
 // App shell + data needed to boot. Paths are relative to the SW scope, so this
 // works whether the site is served at a domain root or a /repo/ subpath.
