@@ -113,7 +113,8 @@
 .hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 0; }
 .hint-log .hint {
   font-size: 0.76rem; font-weight: 800; border: 1.5px solid var(--accent); color: var(--accent);
-  padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em; animation: pop 0.2s ease;
+  padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em;
+  text-align: center; animation: pop 0.2s ease;
 }
 .hint-log .hint.mono { font-family: ui-monospace, monospace; letter-spacing: 1px; text-transform: none; }
 .hint-log .hint-media { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; }
