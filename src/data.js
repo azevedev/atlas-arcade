@@ -47,3 +47,39 @@ export const globeBorders = () => globe.borders;
 export function tierPool(tier) {
   return DATA.countries.filter((c) => c.tier === tier);
 }
+
+// Center + spread of a region/subregion, derived from its member countries, so
+// a hint can point the globe at that area and blob it. Depends on global d3.
+// `scope` is "region" | "subregion"; `value` is e.g. "Asia" / "Southern Asia".
+export function regionArea(scope, value) {
+  if (!DATA || !value) return null;
+  const pts = DATA.countries.filter((c) => c[scope] === value).map((c) => c.ll);
+  if (!pts.length) return null;
+  // spherical mean of the member points (average of unit vectors)
+  let x = 0, y = 0, z = 0;
+  for (const [lng, lat] of pts) {
+    const la = (lat * Math.PI) / 180, lo = (lng * Math.PI) / 180;
+    x += Math.cos(la) * Math.cos(lo);
+    y += Math.cos(la) * Math.sin(lo);
+    z += Math.sin(la);
+  }
+  const center = [
+    (Math.atan2(y, x) * 180) / Math.PI,
+    (Math.atan2(z, Math.sqrt(x * x + y * y)) * 180) / Math.PI,
+  ];
+  // radius ≈ how far the members spread from that center (degrees, clamped)
+  let maxRad = 0;
+  for (const p of pts) maxRad = Math.max(maxRad, d3.geoDistance(p, center));
+  const radiusDeg = Math.min(42, Math.max(9, (maxRad * 180) / Math.PI * 0.85));
+  return { point: center, radiusDeg };
+}
+
+// Which country (if any) contains a [lng, lat] point — used to tell the player
+// which country they actually tapped in "locate" mode. Depends on global d3.
+export function countryAtPoint(point) {
+  if (!DATA || !point) return null;
+  for (const c of DATA.countries) {
+    if (c.feature && d3.geoContains(c.feature, point)) return c;
+  }
+  return null;
+}

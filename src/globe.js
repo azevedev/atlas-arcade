@@ -23,6 +23,9 @@ export class Globe {
 
     this.highlightFeature = null;
     this.highlightColor = null;
+    this.highlight2 = null; // secondary highlight (e.g. the country the player tapped)
+    this.highlight2Color = null;
+    this.arc = null; // connecting line { geometry, color }
     this.markers = [];
     this.blob = null;
     this.pickEnabled = false;
@@ -182,6 +185,30 @@ export class Globe {
       ctx.stroke();
     }
 
+    // secondary highlight — the country the player tapped in locate mode
+    if (this.highlight2) {
+      ctx.beginPath();
+      path(this.highlight2);
+      ctx.fillStyle = this.highlight2Color || "#2f6bff";
+      ctx.globalAlpha = 0.85;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#ffffff88";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+
+    // connecting arc — from the player's tap to the correct place
+    if (this.arc) {
+      ctx.beginPath();
+      path(this.arc.geometry);
+      ctx.strokeStyle = this.arc.color || "#888";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // region blob (capital hint)
     if (this.blob) {
       const circle = d3.geoCircle().center(this.blob.point).radius(this.blob.radiusDeg)();
@@ -336,6 +363,19 @@ export class Globe {
     this.highlightFeature = null;
     this.render(true);
   }
+  highlightSecondary(country, color = null) {
+    this.highlight2 = featureFor(country);
+    this.highlight2Color = color;
+    this.render(true);
+  }
+  setArc(a, b, color = null) {
+    const interp = d3.geoInterpolate(a, b);
+    const coords = [];
+    for (let t = 0; t <= 1; t += 0.02) coords.push(interp(t));
+    coords.push(interp(1));
+    this.arc = { geometry: { type: "LineString", coordinates: coords }, color };
+    this.render(true);
+  }
   setMarker(point, color = null) {
     this.markers = [{ point, color }];
     this.render(true);
@@ -358,6 +398,8 @@ export class Globe {
   }
   clearAll() {
     this.highlightFeature = null;
+    this.highlight2 = null;
+    this.arc = null;
     this.markers = [];
     this.blob = null;
     this.render(true);

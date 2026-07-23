@@ -3,7 +3,7 @@
 import { Globe } from "./globe.js";
 import { Autocomplete } from "./input.js";
 import { drawSilhouette } from "./silhouette.js";
-import { featureFor } from "./data.js";
+import { featureFor, countryAtPoint, regionArea } from "./data.js";
 import { formatTime } from "./scoring.js";
 
 const $ = (id) => document.getElementById(id);
@@ -205,6 +205,15 @@ export function createUI() {
             globe.highlight(c);
             globe.setMarker(c.ll);
           });
+        } else if (hint.kind === "region") {
+          // point the globe at that region/subregion and blob the general area
+          // (without revealing the exact country)
+          const area = regionArea(hint.scope, c[hint.scope]);
+          if (area) {
+            globe.setIdle(false);
+            globe.rotateTo(area.point, 600);
+            globe.setBlob(area.point, area.radiusDeg);
+          }
         }
       }
       els.hintLog.appendChild(chip);
@@ -297,12 +306,26 @@ export function createUI() {
         const c = q.country;
         hideMedia();
         els.locateBadge.hidden = true;
-        // fly the globe to the answer and label it so the player sees where it is
         globe.setIdle(false);
-        globe.rotateTo(c.ll, 700).then(() => {
-          globe.highlight(c, res.correct ? "#9be3b4" : "#ffb3bf");
-          const markers = [{ point: c.cap, color: "#ff3d71" }];
-          if (res.guess) markers.push({ point: res.guess, color: "#4aa8ff" });
+        if (q.type === "locate") globe.clearBlob(); // drop any leftover hint area
+        // which country did the player actually tap? (null = open ocean)
+        const tapped =
+          q.type === "locate" && res.guess && !res.correct
+            ? countryAtPoint(res.guess)
+            : null;
+        // on a miss, frame the midpoint so BOTH the answer and the tap are visible
+        const focus =
+          q.type === "locate" && res.guess && !res.correct
+            ? d3.geoInterpolate(res.guess, c.ll)(0.5)
+            : c.ll;
+        globe.rotateTo(focus, 700).then(() => {
+          globe.highlight(c, "#ff4a1c"); // the correct place, in brand orange
+          const markers = [{ point: c.cap, color: "#ff4a1c" }];
+          if (q.type === "locate" && res.guess && !res.correct) {
+            if (tapped) globe.highlightSecondary(tapped, "#2f6bff"); // where you tapped
+            globe.setArc(res.guess, c.ll, "#9a8f74"); // line from tap to answer
+            markers.push({ point: res.guess, color: "#2f6bff" });
+          }
           globe.setMarkers(markers);
           placeLabel(c.ll, `${c.name} · ${c.capital}`);
         });
@@ -311,7 +334,9 @@ export function createUI() {
         els.reveal.className = "reveal " + (res.correct ? "ok" : "bad");
         els.revealMark.textContent = res.correct ? "✓" : "✕";
         if (q.type === "locate") {
-          els.revealText.innerHTML = `<b>${c.name}</b>`;
+          els.revealText.innerHTML = res.correct
+            ? `<b>${c.name}</b>`
+            : `<b>${c.name}</b> — you tapped <b>${tapped ? tapped.name : "open ocean"}</b>`;
         } else if (res.correct) {
           els.revealText.innerHTML = `<b>${answer}</b>`;
         } else {

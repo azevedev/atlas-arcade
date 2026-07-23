@@ -20,9 +20,10 @@ function lengthPattern(q) {
 }
 
 export function hintPlan(q) {
-  const region = { kind: "region", label: `Region: ${q.country.region || "—"}` };
+  const region = { kind: "region", scope: "region", label: `Region: ${q.country.region || "—"}` };
   const continent = {
     kind: "region",
+    scope: "subregion",
     label: `Located in ${continentOf(q.country)}`,
   };
   const first = { kind: "first", label: `Starts with “${firstLetter(q)}”` };
