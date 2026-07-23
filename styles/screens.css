@@ -110,7 +110,7 @@
   border: 1.5px solid var(--ink-soft); padding: 3px 10px; border-radius: var(--radius); text-decoration: line-through;
 }
 
-.hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 0; }
+.hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; min-height: 0; }
 .hint-log .hint {
   font-size: 0.76rem; font-weight: 800; border: 1.5px solid var(--accent); color: var(--accent);
   padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em;
