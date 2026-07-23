@@ -27,7 +27,8 @@
 .btn-labels b { font-family: "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: 0; font-size: 1.05rem; }
 .btn-labels small { font-weight: 600; opacity: 0.75; font-size: 0.72rem; text-transform: none; letter-spacing: 0; margin-top: 2px; }
 
-.menu-meta { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 22px 0 4px; }
+.menu-meta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 22px 0 4px; }
+.menu-meta .chip { width: 220px; text-align: center; padding: 9px 12px; }
 
 .howto { margin-top: 18px; text-align: left; border-top: var(--border); padding: 6px 2px 0; }
 .howto summary {
