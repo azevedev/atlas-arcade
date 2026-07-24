@@ -27,7 +27,8 @@
 .btn-labels b { font-family: "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: 0; font-size: 1.05rem; }
 .btn-labels small { font-weight: 600; opacity: 0.75; font-size: 0.72rem; text-transform: none; letter-spacing: 0; margin-top: 2px; }
 
-.menu-meta { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 22px 0 4px; }
+.menu-meta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 22px 0 4px; }
+.menu-meta .chip { width: 220px; text-align: center; padding: 9px 12px; }
 
 .howto { margin-top: 18px; text-align: left; border-top: var(--border); padding: 6px 2px 0; }
 .howto summary {
@@ -109,10 +110,11 @@
   border: 1.5px solid var(--ink-soft); padding: 3px 10px; border-radius: var(--radius); text-decoration: line-through;
 }
 
-.hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 0; }
+.hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; min-height: 0; }
 .hint-log .hint {
   font-size: 0.76rem; font-weight: 800; border: 1.5px solid var(--accent); color: var(--accent);
-  padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em; animation: pop 0.2s ease;
+  padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em;
+  text-align: center; animation: pop 0.2s ease;
 }
 .hint-log .hint.mono { font-family: ui-monospace, monospace; letter-spacing: 1px; text-transform: none; }
 .hint-log .hint-media { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; }

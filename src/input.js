@@ -60,8 +60,10 @@ export class Autocomplete {
     // show all matches (the list scrolls); never reveal which country a capital
     // belongs to — that would give the answer away.
     this.items = suggest(q, this.kind, 200, this.exclude);
-    this.active = -1;
-    if (!this.items.length) return this._hide();
+    if (!this.items.length) {
+      this.active = -1;
+      return this._hide();
+    }
     this.list.innerHTML = this.items
       .map((it, i) => {
         const sub =
@@ -70,6 +72,10 @@ export class Autocomplete {
       })
       .join("");
     this.list.hidden = false;
+    // when the list has narrowed to a few options, pre-select the top one so a
+    // single Enter accepts it (no need to arrow down first)
+    this.active = this.items.length <= 3 ? 0 : -1;
+    this._highlight();
   }
 
   _hide() {

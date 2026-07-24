@@ -49,7 +49,7 @@
   /* globe reads as a printed atlas: black landmasses on paper, orange highlight */
   --globe-ocean: #f0eee6;
   --globe-land: #0f0f0f;
-  --globe-border: #0f0f0f;
+  --globe-border: #cfc9ba; /* light hairline so country borders read on black land */
   --globe-graticule: #d9d5c8;
   --globe-highlight: #ff4a1c;
   --globe-marker: #ff4a1c;
@@ -96,7 +96,7 @@
 
   --globe-ocean: #161615;
   --globe-land: #f4f2ea;
-  --globe-border: #f4f2ea;
+  --globe-border: #8a857a; /* dark hairline so country borders read on light land */
   --globe-graticule: #34332f;
   --globe-highlight: #ff5a2c;
   --globe-marker: #ff5a2c;
