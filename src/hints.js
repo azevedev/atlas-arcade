@@ -98,10 +98,13 @@ function shownByClue(q) {
     if (q.clueMode === "flag") shown.add("flag");
     else if (q.clueMode === "shape") shown.add("shape");
     else if (q.clueMode === "position") {
-      // the globe rotates to the country and highlights it, so both the exact
-      // position and the region it sits in are already visible
+      // The globe rotates to the country and draws its outline highlighted, so
+      // the position, the region it sits in, AND its shape are all on screen.
+      // Offering "shape revealed" here charged the player for a picture of
+      // something already in front of them.
       shown.add("position");
       shown.add("region");
+      shown.add("shape");
     }
   } else if (q.type === "capital") {
     // the prompt names the country, and the globe flies to it and blobs the
@@ -143,7 +146,11 @@ export function hintPlan(q) {
     // from one letter, to the shape of the word, to half of its letters.
     order = ["first", "length", "reveal"];
   } else {
-    order = ["region", "continent", "shape", "flag"];
+    // Locate. The prompt already names the country, so identity is settled and
+    // the flag adds nothing: knowing what Brazil's flag looks like does not
+    // help you find Brazil. The shape does help, because you can match the
+    // outline against the globe. So this ladder is location only, broad first.
+    order = ["region", "continent", "shape"];
   }
 
   return order

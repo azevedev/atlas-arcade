@@ -11,7 +11,15 @@ import {
 } from "./scoring.js";
 import { sfx } from "./audio.js";
 
-const LOCATE_GOOD = 500; // points needed for a locate to keep the combo
+const LOCATE_GOOD = 500; // points floor for a locate that landed on the country
+
+// How close a tap that is NOT inside the country still counts. Kept small on
+// purpose, but it cannot be zero: Vatican City, San Marino, Monaco, Malta and
+// Tuvalu have no polygon a tap can realistically land inside, so without a
+// tolerance they would be unwinnable. At 150km only 22 country pairs in the
+// whole set remain mutually ambiguous, and they are true neighbours such as
+// Bahrain and Qatar, 89km apart.
+const LOCATE_NEAR_KM = 150;
 
 export class Engine {
   constructor(view, config) {
@@ -141,7 +149,11 @@ export class Engine {
     const raw = locatePoints(km, this.hintsUsed);
     // a hit still scores by how central it was, but never drops below a pass
     const pts = onTarget ? Math.max(raw, LOCATE_GOOD) : raw;
-    const good = onTarget || pts >= LOCATE_GOOD;
+    // Being merely near is not finding it. The old rule passed anything worth
+    // LOCATE_GOOD, which works out at 1040km from the centroid, so 173 of the
+    // 194 countries could be "found" by tapping a different country: asked for
+    // Spain, tapping Andorra scored green.
+    const good = onTarget || km <= LOCATE_NEAR_KM;
 
     // A locate resolves in one tap, so _grade never hears about the failure the
     // way a typed guess does. Without this, missing the globe by half a world
