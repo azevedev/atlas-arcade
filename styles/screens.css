@@ -291,3 +291,23 @@
   margin: 0 0 4px; color: var(--ink-soft); font-weight: 600;
   font-size: 0.78rem; line-height: 1.35; min-height: 2.1em;
 }
+
+/* ================= ICON + LABEL BUTTONS ================= */
+/* Buttons that pair an icon with a label lay out as a fixed icon column plus a
+   flexible label column, rather than the centred flex row .btn uses by default.
+   Centring the pair as a group made each icon's position depend on how long its
+   label was, so the icons drifted 39px down the menu and 34px down the picker
+   instead of forming a column. */
+.menu-buttons .btn,
+.btn.cat-btn {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+.menu-buttons .btn .btn-emoji,
+.btn.cat-btn .btn-emoji {
+  justify-self: center;
+  line-height: 1;
+}
