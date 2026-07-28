@@ -46,7 +46,16 @@ function mainCluster(feature) {
   };
 }
 
-export function drawSilhouette(svgEl, country, { size = 260, color = "#8a7bd8" } = {}) {
+const themeVar = (name, fallback) =>
+  (typeof getComputedStyle === "function"
+    ? getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    : "") || fallback;
+
+export function drawSilhouette(svgEl, country, { size = 260, color = null, stroke = null } = {}) {
+  color = color || themeVar("--accent", "#bb8588");
+  // the outline separates islands from the mainland, so it has to be the
+  // surface colour the shape sits on, not a hardcoded white
+  stroke = stroke || themeVar("--card", "#efebce");
   const feature = country && country.feature;
   svgEl.innerHTML = "";
   if (!feature) return false;
@@ -68,7 +77,7 @@ export function drawSilhouette(svgEl, country, { size = 260, color = "#8a7bd8" }
   const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
   p.setAttribute("d", path(shape) || "");
   p.setAttribute("fill", color);
-  p.setAttribute("stroke", "#ffffff");
+  p.setAttribute("stroke", stroke);
   p.setAttribute("stroke-width", "2");
   p.setAttribute("stroke-linejoin", "round");
   svgEl.appendChild(p);
