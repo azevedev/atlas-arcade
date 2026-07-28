@@ -2,81 +2,95 @@
 #screen-menu { align-items: center; justify-content: center; padding: 24px; }
 .menu-card {
   width: min(460px, 94vw);
-  background: var(--card);
+  background: var(--sheen-card);
   border: var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hard), var(--shadow-soft);
   padding: 34px 28px 26px;
   text-align: center;
 }
-.logo { font-size: 3.4rem; line-height: 1; animation: bob 4s ease-in-out infinite; }
-@keyframes bob { 50% { transform: translateY(-8px) rotate(-6deg); } }
+.logo { font-size: 3.6rem; line-height: 1; animation: bob 4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-9px) rotate(-6deg); } }
 .title {
   display: inline-block;
   font-size: 2.9rem; margin: 12px 0 4px; color: var(--ink);
-  border-bottom: 7px solid var(--accent); padding-bottom: 6px;
+  /* sticker-style hard offset, the type equivalent of the button shadow */
+  text-shadow: 3px 3px 0 var(--bronze);
+  padding-bottom: 6px;
 }
 .tagline {
-  color: var(--ink-soft); margin: 14px 0 22px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.78rem;
+  color: var(--ink-soft); margin: 16px 0 22px; font-weight: 700;
+  font-size: 0.92rem; line-height: 1.4;
 }
 
-.menu-buttons { display: flex; flex-direction: column; gap: 14px; }
-.menu-buttons .btn { padding: 16px 18px; font-size: 1.1rem; }
-.btn-emoji { font-size: 1.6rem; }
+.menu-buttons { display: flex; flex-direction: column; gap: 16px; }
+.menu-buttons .btn { padding: 17px 18px; font-size: 1.1rem; }
+.btn-emoji { font-size: 1.7rem; }
 .btn-labels { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; text-align: left; }
 .btn-labels b { font-family: "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: 0; font-size: 1.05rem; }
-.btn-labels small { font-weight: 600; opacity: 0.75; font-size: 0.72rem; text-transform: none; letter-spacing: 0; margin-top: 2px; }
+/* 0.85 (not 0.75): on the rose primary button the ink label composites to
+   4.9:1 here, where 0.75 drops it under the 4.5:1 floor. */
+.btn-labels small { font-weight: 600; opacity: 0.85; font-size: 0.72rem; text-transform: none; letter-spacing: 0; margin-top: 2px; }
 
-.menu-meta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 22px 0 4px; }
-.menu-meta .chip { width: 220px; text-align: center; padding: 9px 12px; }
+.menu-meta { display: flex; flex-direction: column; align-items: center; gap: 11px; margin: 24px 0 4px; }
+.menu-meta .chip { width: 220px; text-align: center; padding: 10px 12px; }
 
-.howto { margin-top: 18px; text-align: left; border-top: var(--border); padding: 6px 2px 0; }
+.howto { margin-top: 20px; text-align: left; border-top: 2px dashed var(--ink-soft); padding: 6px 2px 0; }
 .howto summary {
   cursor: pointer; font-family: "Archivo Black", sans-serif; text-transform: uppercase;
-  letter-spacing: 0.04em; font-size: 0.82rem; padding: 12px 0; color: var(--ink);
+  letter-spacing: 0.04em; font-size: 0.82rem; padding: 13px 0; color: var(--ink);
 }
-.howto ul { margin: 0 0 12px; padding-left: 18px; color: var(--ink-soft); font-size: 0.9rem; line-height: 1.55; }
+.howto ul { margin: 0 0 12px; padding-left: 18px; color: var(--ink-soft); font-size: 0.9rem; line-height: 1.6; }
 .howto b { color: var(--ink); }
 
 /* ================= ARCADE CATEGORY PICKER ================= */
 #screen-arcade { align-items: center; justify-content: center; padding: 24px; }
 .back-link {
-  position: absolute; top: 16px; left: 16px; border: none; background: transparent;
+  position: absolute; top: 16px; left: 16px; border: none; background: none;
   color: var(--ink-soft); font-family: "Inter", sans-serif; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; cursor: pointer; padding: 6px 8px;
 }
-.back-link:hover { color: var(--accent); }
+.back-link:hover { color: var(--accent-text); }
 .menu-card { position: relative; }
-.logo.small { font-size: 2.2rem; }
+.logo.small { font-size: 2.3rem; }
 .cats-title { font-size: 1.6rem; margin: 10px 0 4px; color: var(--ink); }
-.cat-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-.cat-btn { padding: 14px 18px; font-size: 1.05rem; }
+.cat-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+.cat-btn { padding: 15px 18px; font-size: 1.05rem; }
 
 /* ================= GAME ================= */
 #screen-game { flex-direction: column; }
+/* The HUD and panel are deliberately compact: every pixel they give back goes
+   straight into the globe, which is the thing the player is actually reading. */
 .hud {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 7px 12px;
   border-bottom: var(--border);
+  background: var(--sheen-card);
 }
 .hud-back {
-  border: var(--border); background: var(--card); color: var(--ink);
-  width: 40px; height: 40px; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: 800;
+  border: 2px solid var(--line); background: var(--sheen-quiet); color: var(--ink);
+  width: 36px; height: 36px; border-radius: var(--radius); font-size: 0.9rem; cursor: pointer; font-weight: 800;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease;
 }
-.hud-back:hover { background: var(--ink); color: var(--bg-1); }
+.hud-back:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--line); }
+.hud-back:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
 .hud-score { display: flex; flex-direction: column; line-height: 1; }
-.hud-label { font-size: 0.6rem; letter-spacing: 0.18em; color: var(--ink-soft); font-weight: 800; }
-#hud-score { font-family: "Archivo Black", sans-serif; font-size: 1.6rem; margin-top: 2px; }
-.hud-lives { justify-self: end; font-size: 1rem; letter-spacing: 3px; color: var(--accent); font-weight: 900; }
+.hud-label { font-size: 0.54rem; letter-spacing: 0.18em; color: var(--ink-soft); font-weight: 800; }
+#hud-score { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; margin-top: 1px; }
+.hud-lives { justify-self: end; font-size: 1.05rem; letter-spacing: 3px; color: var(--accent-text); font-weight: 900; }
 .hud-lives .dead { color: var(--ink-soft); opacity: 0.4; }
+/* a combo only exists while you are chaining correct answers, so it is green too */
 .hud-combo {
-  justify-self: end; font-family: "Archivo Black", sans-serif; color: #fff;
-  background: var(--accent); border: 2px solid var(--line);
-  padding: 4px 10px; border-radius: var(--radius); font-size: 0.78rem;
-  text-transform: uppercase; letter-spacing: 0.02em; animation: pop 0.25s ease;
+  justify-self: end; font-family: "Archivo Black", sans-serif; color: var(--on-accent);
+  background: linear-gradient(180deg, #a8c47c, var(--ok)); border: 2px solid var(--line);
+  padding: 5px 12px; border-radius: var(--radius-pill); font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.02em;
+  box-shadow: 0 3px 0 var(--line);
+  animation: pop 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
 .hud-progress { justify-self: end; font-family: "Archivo Black", sans-serif; color: var(--ink-soft); font-size: 0.9rem; }
 
@@ -84,80 +98,149 @@
 
 /* ================= PANEL ================= */
 .panel {
-  background: var(--card);
+  background: var(--sheen-card);
   border-top: var(--border);
-  border-radius: 0;
-  padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 .meter { display: flex; align-items: center; justify-content: space-between; }
 .stopwatch {
-  font-family: "Archivo Black", sans-serif; color: var(--ink-soft); font-size: 0.9rem;
+  font-family: "Archivo Black", sans-serif; color: var(--ink-soft); font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
 .points-chip {
-  font-family: "Inter", sans-serif; font-weight: 800; color: #fff; background: var(--accent);
-  border-radius: var(--radius); padding: 3px 12px; font-size: 0.82rem;
+  font-family: "Inter", sans-serif; font-weight: 800; color: var(--on-accent);
+  background: var(--sheen-primary);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill); padding: 3px 11px; font-size: 0.74rem;
   text-transform: uppercase; letter-spacing: 0.03em;
+  box-shadow: 0 2px 0 var(--line);
 }
-.prompt { font-size: 1.5rem; font-weight: 400; margin: 2px 0; text-align: center; color: var(--ink); line-height: 1.1; }
+.prompt { font-size: 1.18rem; font-weight: 400; margin: 0; text-align: center; color: var(--ink); line-height: 1.15; }
 
-.guesses { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.guesses { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
 .guesses .guess {
   font-size: 0.76rem; font-weight: 700; color: var(--ink-soft);
-  border: 1.5px solid var(--ink-soft); padding: 3px 10px; border-radius: var(--radius); text-decoration: line-through;
+  border: 2px solid var(--ink-soft); padding: 3px 12px; border-radius: var(--radius-pill); text-decoration: line-through;
 }
 
-.hint-log { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; min-height: 0; }
+.hint-log { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; align-items: center; min-height: 0; }
 .hint-log .hint {
-  font-size: 0.76rem; font-weight: 800; border: 1.5px solid var(--accent); color: var(--accent);
-  padding: 4px 10px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.03em;
-  text-align: center; animation: pop 0.2s ease;
+  font-size: 0.76rem; font-weight: 800; border: 2px solid var(--accent); color: var(--accent-text);
+  background: var(--card);
+  padding: 5px 12px; border-radius: var(--radius-pill); text-transform: uppercase; letter-spacing: 0.03em;
+  text-align: center; animation: pop 0.26s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
 .hint-log .hint.mono { font-family: ui-monospace, monospace; letter-spacing: 1px; text-transform: none; }
-.hint-log .hint-media { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; }
-.hint-log .hint-flag { width: 34px; height: auto; border: 1px solid var(--line); display: block; }
+/* media hints are buttons that open the full-size view */
+.hint-log button.hint {
+  font-family: inherit; font-size: 0.76rem; cursor: zoom-in;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease;
+}
+.hint-log button.hint:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--line); }
+.hint-log button.hint:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
+.hint-log .hint-media { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 6px; }
+.hint-log .hint-flag { width: 34px; height: auto; border: 2px solid var(--line); border-radius: 4px; display: block; }
 .hint-log .hint-shape { width: 30px; height: 30px; display: block; }
 .hint-log .hint-shape path { fill: var(--accent) !important; }
 
 .answer-row { position: relative; }
 .ac { position: relative; }
 .answer-input {
-  width: 100%; font-family: "Inter", sans-serif; font-weight: 700; font-size: 1.1rem;
-  padding: 14px 16px; border-radius: var(--radius); border: var(--border);
+  width: 100%; font-family: "Inter", sans-serif; font-weight: 700;
+  /* 16px minimum: anything smaller makes iOS Safari zoom the page on focus,
+     which is the single worst viewport jump on mobile */
+  font-size: 16px;
+  padding: 11px 15px; border-radius: var(--radius); border: 2px solid var(--line);
   background: var(--card); color: var(--ink); outline: none;
+  /* inset shading so the field reads as carved in, the inverse of the buttons */
+  box-shadow: inset 0 3px 0 rgba(51, 35, 28, 0.12);
 }
-.answer-input::placeholder { color: var(--ink-soft); opacity: 0.8; text-transform: none; }
+/* no opacity: --ink-soft is 5.8:1 on its own, and fading it drops it under AA */
+.answer-input::placeholder { color: var(--ink-soft); text-transform: none; }
 .answer-input:focus { border-color: var(--accent); }
 .suggestions {
-  list-style: none; margin: 6px 0 0; padding: 6px; position: absolute; left: 0; right: 0; bottom: calc(100% + 6px);
-  background: var(--card); border: var(--border); border-radius: var(--radius); z-index: 8; max-height: 42vh; overflow: auto;
+  list-style: none; margin: 8px 0 0; padding: 7px; position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+  background: var(--sheen-card); border: var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-hard), var(--shadow-soft);
+  z-index: 8; max-height: 42vh; overflow: auto;
 }
-.suggestions li { padding: 10px 12px; border-radius: 2px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.suggestions li.active, .suggestions li:hover { background: var(--accent); color: #fff; }
-.suggestions li.active .ac-sub, .suggestions li:hover .ac-sub { color: #fff; opacity: 0.85; }
+.suggestions li { padding: 10px 13px; border-radius: var(--radius-pill); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.suggestions li.active, .suggestions li:hover { background: var(--accent); color: var(--on-accent); }
+.suggestions li.active .ac-sub, .suggestions li:hover .ac-sub { color: var(--on-accent); opacity: 0.85; }
+.suggestions li.ac-empty { cursor: default; color: var(--ink-soft); font-weight: 600; justify-content: center; }
+.suggestions li.ac-empty:hover { background: none; color: var(--ink-soft); }
 .ac-name { font-weight: 800; }
 .ac-sub { font-size: 0.78rem; color: var(--ink-soft); }
 
 .controls { display: flex; gap: 10px; }
-.controls .btn { flex: 1; padding: 12px; font-size: 0.95rem; }
+/* 44px min-height keeps these a comfortable touch target even while compact */
+.controls .btn { flex: 1; padding: 10px; font-size: 0.86rem; min-height: 44px; }
 
 /* ================= RESULTS ================= */
 #screen-results { align-items: center; justify-content: center; padding: 24px; }
-.results-card { width: min(440px, 94vw); background: var(--card); border: var(--border); border-radius: var(--radius-lg); padding: 32px 26px; text-align: center; }
-#results-title { font-size: 2.2rem; margin: 0 0 8px; color: var(--ink); }
-.results-score { margin: 10px 0 16px; }
-#results-score { font-family: "Archivo Black", sans-serif; font-size: 4rem; line-height: 1; color: var(--accent); }
+.results-card {
+  width: min(440px, 94vw); background: var(--sheen-card); border: var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-hard), var(--shadow-soft);
+  padding: 32px 26px; text-align: center;
+}
+#results-title { font-size: 2.2rem; margin: 0 0 8px; color: var(--ink); text-shadow: 3px 3px 0 var(--bronze); }
+.results-score { margin: 14px 0 18px; }
+#results-score { font-family: "Archivo Black", sans-serif; font-size: 4rem; line-height: 1; color: var(--accent-text); }
 .results-score small { display: block; color: var(--ink-soft); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.66rem; margin-top: 4px; }
-.results-stats { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; }
+.results-stats { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; }
 .results-stats b { color: var(--ink); font-family: "Archivo Black", sans-serif; }
-.share-grid { font-size: 1.35rem; line-height: 1.35; background: var(--card-2); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 14px; margin: 0 0 16px; white-space: pre; font-family: ui-monospace, monospace; }
-.results-buttons { display: flex; flex-direction: column; gap: 10px; }
+.share-grid {
+  font-size: 1.35rem; line-height: 1.35; background: var(--card-2);
+  border: 2px solid var(--line); border-radius: var(--radius); padding: 15px; margin: 0 0 18px;
+  white-space: pre; font-family: ui-monospace, monospace;
+  box-shadow: inset 0 3px 0 rgba(51, 35, 28, 0.12);
+}
+.results-buttons { display: flex; flex-direction: column; gap: 12px; }
 
 /* ================= responsive ================= */
 @media (min-width: 780px) {
   #screen-game { max-width: 900px; margin: 0 auto; }
-  .prompt { font-size: 1.7rem; }
+  .prompt { font-size: 1.4rem; }
+  .panel { padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); gap: 10px; }
+}
+
+/* Desktop: the menu stops being a 460px column floating in an empty page and
+   becomes an asymmetric split (brand left, actions right). Everything below
+   1024px keeps the single-column mobile layout untouched. */
+@media (min-width: 1024px) {
+  .menu-card {
+    width: min(980px, 92vw);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 56px;
+    align-items: start;
+    text-align: left;
+    padding: 52px 48px;
+  }
+  .logo { font-size: 4.8rem; }
+  .title { font-size: 4.2rem; margin-top: 18px; text-shadow: 5px 5px 0 var(--bronze); }
+  .tagline { margin-bottom: 0; font-size: 1rem; }
+  .btn-labels { text-align: left; }
+  /* 2x2 so the meta row does not read as four more full-width buttons */
+  .menu-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 28px; }
+  .menu-meta .chip { width: auto; }
+  .howto { margin-top: 28px; }
+
+  /* the picker uses a different layout family from the menu split: a 2-up grid */
+  #screen-arcade .menu-card {
+    display: block;
+    width: min(760px, 92vw);
+    text-align: center;
+  }
+  #screen-arcade .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  /* 5 categories in a 2-col grid: the first spans both so no cell is left empty */
+  #screen-arcade .cat-grid .cat-btn:first-child { grid-column: 1 / -1; }
 }

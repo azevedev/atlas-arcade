@@ -1,5 +1,5 @@
 /* ============ fonts ============ */
-/* Bold-editorial pairing: Archivo Black for loud display type, Inter for UI. */
+/* Archivo Black for chunky display type, Inter for UI. */
 @font-face {
   font-family: "Archivo Black";
   src: url("../assets/fonts/archivo-black.woff2") format("woff2");
@@ -13,125 +13,242 @@
   font-display: swap;
 }
 
-/* ============ LIGHT palette (default) — editorial: paper white, ink black, one hot orange ============ */
+/* ============================================================
+   EARTHY TONES
+   Dry Sage, Vanilla Custard, Vanilla Cream, Light Bronze, Dusty Rose,
+   grounded on a rich umber ink.
+
+   Accent lock: Dusty Rose is the ONE accent. It carries every primary
+   action and every "this is the answer" moment. Sage / custard / cream /
+   bronze are the neutral surface ramp and never signal an action.
+
+   Radius rule (documented, per the shape lock):
+     cards + panels  -> --radius-lg (22px)
+     buttons, inputs -> --radius    (14px)
+     chips + pills   -> --radius-pill (full)
+   ============================================================ */
 :root {
-  --bg-1: #ffffff;
-  --bg-2: #ffffff;
-  --bg-3: #ffffff;
+  /* raw palette */
+  --sage: #a3a380;
+  --sage-light: #b4b494;
+  --custard: #d6ce93;
+  --custard-light: #e0d9a5;
+  --custard-deep: #c8bf80;
+  --cream: #efebce;
+  --cream-light: #f7f4e2;
+  --cream-deep: #e5dfba;
+  --bronze: #d8a48f;
+  --bronze-light: #e3b8a6;
+  --rose: #bb8588;
+  --rose-light: #cf9b9d;
+  --rose-deep: #9c6a6d;
+  --umber: #33231c;
 
-  --ink: #0f0f0f;
-  --ink-soft: #6c6c6c;
-  --line: #0f0f0f;
+  /* semantic */
+  --ink: #33231c;
+  --ink-soft: #6b5548; /* 5.8:1 on cream */
+  --line: #33231c;
 
-  --card: #ffffff;
-  --card-2: #f3f1ea;
-  --shadow: none;
-  --shadow-sm: none;
+  --bg-1: var(--custard);
+  --card: var(--cream);
+  --card-2: var(--cream-deep);
+  /* page lighting: key light upper-left, bounce lower-right. Themed, because
+     the raw palette tints would stay bright and blow out the dark mode. */
+  --bg-glow-1: var(--cream);
+  --bg-glow-2: var(--bronze);
 
-  /* single saturated accent */
-  --accent: #ff4a1c;
-  --accent-2: #0f0f0f;
+  /* Accent contrast set. --accent is a fill colour only; at 2.6:1 on cream it
+     can never be text. The three tokens below are the readable forms:
+       --on-accent       text ON a rose fill              (4.9:1)
+       --accent-text     rose AS text on the page / card  (5.4:1)
+       --accent-text-inv rose AS text on an --ink fill    (4.9:1) */
+  --accent: var(--rose);
+  --accent-2: var(--bronze);
+  --on-accent: #33231c;
+  --accent-text: #8a4c50;
+  --accent-text-inv: #bb8588;
+  --focus-ring: #33231c;
 
-  --coral: #ff4a1c;
-  --coral-deep: #e23c12;
-  --mint: #0f0f0f;
-  --lav: #0f0f0f;
-  --sky: #0f0f0f;
-  --butter: #ff4a1c;
-  --grass: #0f0f0f;
+  /* Success is the one place a second hue is allowed past the accent lock:
+     "you got it right" is real semantic state, not decoration. Leaf green,
+     picked to sit with the globe's temperate band rather than fight it.
+       --ok      fill, carries ink text at 6.0:1
+       --ok-text green AS text on the card at 5.6:1 */
+  --ok: #8fae62;
+  --ok-text: #4a6330;
 
-  --ok: #0f0f0f;
-  --bad: #0f0f0f;
-  --bad-soft: #f3f1ea;
-  --accent-ink: #0f0f0f;
-  --accent-soft: #ffe4da;
+  /* Continue is "move on", not "you were right", so it must not be green and
+     must not be the rose accent either. Deep ocean blue, lifted straight off
+     the globe's own water, so the one cool colour on screen has a source.
+     Carries cream text at 4.6:1 on the light stop, 6.5:1 on the dark one. */
+  --sheen-blue: linear-gradient(180deg, #2b6f8d, #1f5872);
+  --on-blue: #efebce;
 
-  /* globe reads as a printed atlas: black landmasses on paper, orange highlight */
-  --globe-ocean: #f0eee6;
-  --globe-land: #0f0f0f;
-  --globe-border: #cfc9ba; /* light hairline so country borders read on black land */
-  --globe-graticule: #d9d5c8;
-  --globe-highlight: #ff4a1c;
-  --globe-marker: #ff4a1c;
-  --globe-blob: #ff4a1c;
-  --globe-sphere-line: #0f0f0f;
-  --globe-glow: #00000000;
+  /* 2D-shader surfaces: a baked top-light gradient, a chunky offset shadow
+     standing in for a hard cast shadow, and a soft tinted ambient shadow. */
+  --sheen-card: linear-gradient(180deg, var(--cream-light), var(--cream-deep));
+  --sheen-primary: linear-gradient(180deg, var(--rose-light), var(--rose));
+  --sheen-quiet: linear-gradient(180deg, var(--custard-light), var(--custard-deep));
+  --shadow-hard: 0 5px 0 var(--line);
+  --shadow-hard-lift: 0 8px 0 var(--line);
+  --shadow-soft: 0 10px 22px rgba(51, 35, 28, 0.16);
 
-  --radius: 4px;
-  --radius-lg: 6px;
-  --border: 2px solid var(--line);
+  /* ---- globe: a lit planet, not UI chrome ----
+     The chrome stays cartoon; the globe is the one object on screen that reads
+     naturalistic. The natural colours are pulled toward the palette on purpose:
+     the ice is near cream, the arid band near custard, the temperate band near
+     sage, so a realistic Earth still sits inside Earthy Tones. */
+  --globe-ocean-deep: #245a70;
+  --globe-ocean-shallow: #3f8ba4;
+  /* land colour comes from the sampled Natural Earth II texture; this is only
+     the fallback for the frames before it decodes, and if it fails to load */
+  --globe-land-fallback: #6f8a53;
+  --globe-atmosphere: #86bcd4;
+  --globe-glare: rgba(255, 252, 240, 0.85);
+  --globe-limb-light: #cfe6f0;
+  --globe-limb-dark: #17384a;
+  --globe-border: rgba(24, 44, 34, 0.45);
+  --globe-graticule: rgba(233, 240, 226, 0.26);
+  --globe-highlight: #bb8588;
+  --globe-marker: #9c6a6d;
+  --globe-blob: #d8a48f;
+  --globe-sphere-line: #33231c;
+  /* the country the player tapped, and the line back to the answer.
+     Sage, not a foreign blue: it is palette-native and still reads apart
+     from the rose answer. */
+  --globe-tap: #7d7d5c; /* fills the tapped country, so it must beat the sage land */
+  --globe-tap-pin: #d6ce93; /* the pin itself, kept far from rose so the two reads apart */
+  --globe-arc: #6b5548;
+  --globe-capital: #d6ce93;
+  /* terminator: warm sunlight falling into cold shadow, not warm-into-brown */
+  --globe-shade-light: rgba(255, 250, 228, 0.16);
+  --globe-shade-dark: rgba(6, 20, 32, 0.55);
+  /* the answer, once you have got it right */
+  --globe-correct: #8fae62;
+
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --border: 3px solid var(--line);
 }
 
-/* ============ DARK palette — inverted: ink page, paper type, same orange ============ */
+/* ============ DARK: dusk over the same earth ============ */
 :root[data-theme="dark"] {
-  --bg-1: #0d0d0d;
-  --bg-2: #0d0d0d;
-  --bg-3: #0d0d0d;
+  --ink: #efebce;
+  --ink-soft: #b3a48f;
+  --line: #1c1310;
 
-  --ink: #f4f2ea;
-  --ink-soft: #9a978c;
-  --line: #f4f2ea;
+  --bg-1: #241a15;
+  --card: #3a2a22;
+  --card-2: #4a362c;
+  --bg-glow-1: #3f2e25;
+  --bg-glow-2: #533630;
 
-  --card: #161615;
-  --card-2: #1f1f1d;
-  --shadow: none;
-  --shadow-sm: none;
+  --accent: var(--rose);
+  --accent-2: var(--bronze);
+  /* --ink flips to cream here, so the two accent-as-text tokens swap with it */
+  --on-accent: #33231c;
+  --accent-text: #cf9b9d;
+  --accent-text-inv: #8a4c50;
+  --focus-ring: #efebce;
 
-  --accent: #ff5a2c;
-  --accent-2: #f4f2ea;
+  --ok: #8fae62;
+  --ok-text: #a8c47c; /* 7.1:1 on the dark card */
 
-  --coral: #ff5a2c;
-  --coral-deep: #ff5a2c;
-  --mint: #f4f2ea;
-  --lav: #f4f2ea;
-  --sky: #f4f2ea;
-  --butter: #ff5a2c;
-  --grass: #f4f2ea;
+  --sheen-card: linear-gradient(180deg, #45332a, #33251e);
+  --sheen-primary: linear-gradient(180deg, var(--rose-light), var(--rose-deep));
+  --sheen-quiet: linear-gradient(180deg, #4a362c, #382a22);
+  --shadow-hard: 0 5px 0 var(--line);
+  --shadow-hard-lift: 0 8px 0 var(--line);
+  --shadow-soft: 0 10px 22px rgba(0, 0, 0, 0.42);
 
-  --ok: #f4f2ea;
-  --bad: #f4f2ea;
-  --bad-soft: #1f1f1d;
-  --accent-ink: #f4f2ea;
-  --accent-soft: #3a1f16;
-
-  --globe-ocean: #161615;
-  --globe-land: #f4f2ea;
-  --globe-border: #8a857a; /* dark hairline so country borders read on light land */
-  --globe-graticule: #34332f;
-  --globe-highlight: #ff5a2c;
-  --globe-marker: #ff5a2c;
-  --globe-blob: #ff5a2c;
-  --globe-sphere-line: #f4f2ea;
-  --globe-glow: #00000000;
+  /* the same planet at dusk: same hues, lower key, warmer glare */
+  --globe-ocean-deep: #10303f;
+  --globe-ocean-shallow: #22637a;
+  --globe-land-fallback: #4a6136;
+  --globe-atmosphere: #4d86a6;
+  --globe-glare: rgba(255, 236, 198, 0.65);
+  --globe-limb-light: #9dc4d6;
+  --globe-limb-dark: #0a2331;
+  --globe-border: rgba(12, 24, 18, 0.5);
+  --globe-graticule: rgba(200, 214, 196, 0.16);
+  --globe-highlight: #cf9b9d;
+  --globe-marker: #efebce;
+  --globe-blob: #d8a48f;
+  --globe-sphere-line: #efebce;
+  --globe-tap: #d6ce93;
+  --globe-tap-pin: #d6ce93;
+  --globe-arc: #b3a48f;
+  --globe-capital: #d6ce93;
+  --globe-shade-light: rgba(255, 244, 214, 0.14);
+  --globe-shade-dark: rgba(2, 10, 18, 0.72);
+  --globe-correct: #a8c47c;
 }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html, body { height: 100%; margin: 0; }
+/* dvh keeps the layout still while the iOS Safari address bar collapses;
+   the 100% above it is the fallback for browsers without dvh. */
+html, body { margin: 0; height: 100%; height: 100dvh; }
 body {
   font-family: "Inter", system-ui, sans-serif;
   color: var(--ink);
-  background: var(--bg-1);
+  /* warm key light from the upper left, bronze bounce from the lower right */
+  background:
+    radial-gradient(110% 85% at 12% 0%, var(--bg-glow-1) 0%, transparent 55%),
+    radial-gradient(85% 70% at 92% 100%, var(--bg-glow-2) 0%, transparent 58%),
+    var(--bg-1);
+  background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
+
+/* Paper grain. Fixed and pointer-events:none so it composites once and never
+   repaints with scrolling content. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] body::after { mix-blend-mode: screen; opacity: 0.2; }
+
 h1, h2, h3, .title, .cats-title, #results-title {
   font-family: "Archivo Black", "Inter", sans-serif;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 0.95;
+  letter-spacing: -0.01em;
+  line-height: 0.98;
 }
 .prompt { font-family: "Archivo Black", "Inter", sans-serif; }
 
 #app { height: 100%; position: relative; }
+
+/* ============ keyboard focus ============ */
+/* The game is fully playable from the keyboard, so every interactive element
+   needs a visible ring. The offset puts it outside the control, on the page
+   background, where --focus-ring always has full contrast. */
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+canvas:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
 
 /* ============ screens ============ */
 .screen { position: absolute; inset: 0; display: none; overflow: auto; }
 .screen.active { display: flex; }
 
 /* ============ buttons ============ */
+/* Chunky moulded control: baked top-light gradient, thick ink outline, and a
+   hard offset shadow that collapses on press so the button physically sinks. */
 .btn {
   font-family: "Inter", sans-serif;
   font-weight: 800;
@@ -142,28 +259,31 @@ h1, h2, h3, .title, .cats-title, #results-title {
   padding: 14px 20px;
   font-size: 0.98rem;
   color: var(--ink);
-  background: var(--card);
-  box-shadow: none;
+  background: var(--sheen-card);
+  box-shadow: var(--shadow-hard);
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.12s ease, color 0.12s ease;
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1),
+              box-shadow 0.11s cubic-bezier(0.3, 1.6, 0.5, 1),
+              filter 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 12px;
   justify-content: center;
 }
-.btn:hover { background: var(--ink); color: var(--bg-1); }
-.btn:hover .btn-labels small { color: var(--bg-1); opacity: 0.8; }
-.btn:active { transform: translateY(2px); }
-.btn:disabled { opacity: 0.4; cursor: default; transform: none; background: var(--card); color: var(--ink); }
+.btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-hard-lift); filter: brightness(1.03); }
+.btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--line); filter: brightness(0.98); }
+.btn:disabled {
+  opacity: 0.45; cursor: default; transform: none;
+  box-shadow: var(--shadow-hard); filter: none;
+}
 
-.btn-primary { background: var(--accent); color: #fff; border-color: var(--line); }
-.btn-primary:hover { background: var(--ink); color: var(--accent); }
-.btn-secondary { background: var(--card); color: var(--ink); }
-.btn-ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
-.btn-ghost:hover { background: transparent; color: var(--ink); }
-.btn-hint { background: var(--card); color: var(--accent); border-color: var(--accent); }
-.btn-hint:hover { background: var(--accent); color: #fff; }
-.btn-skip { background: var(--card); color: var(--ink-soft); }
+.btn-primary { background: var(--sheen-primary); color: var(--on-accent); }
+.btn-secondary { background: var(--sheen-card); color: var(--ink); }
+.btn-ghost { background: none; border-color: transparent; box-shadow: none; color: var(--ink-soft); }
+.btn-ghost:hover { background: none; box-shadow: none; transform: translateY(-2px); color: var(--ink); }
+.btn-ghost:active { box-shadow: none; transform: translateY(1px); }
+.btn-hint { background: var(--sheen-card); color: var(--accent-text); border-color: var(--accent); }
+.btn-skip { background: var(--sheen-quiet); color: var(--ink); }
 
 .chip {
   font-family: "Inter", sans-serif;
@@ -171,47 +291,53 @@ h1, h2, h3, .title, .cats-title, #results-title {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.72rem;
-  background: transparent;
+  background: var(--sheen-quiet);
   color: var(--ink);
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius);
-  padding: 6px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease;
 }
 .chip-btn { cursor: pointer; }
-.chip-btn:hover { background: var(--ink); color: var(--bg-1); }
+.chip-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--line); }
+.chip-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
 .pill {
-  background: var(--ink); color: var(--bg-1); border-radius: 2px;
-  padding: 1px 7px; font-size: 0.72rem; margin-left: 6px; font-weight: 800;
+  background: var(--accent); color: var(--on-accent);
+  border: 2px solid var(--line); border-radius: var(--radius-pill);
+  padding: 1px 9px; font-size: 0.72rem; margin-left: 8px; font-weight: 800;
 }
-.btn-hint .pill { background: var(--accent); color: #fff; }
-.btn-hint:hover .pill { background: #fff; color: var(--accent); }
 
 /* ============ toast ============ */
 .toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
-  background: var(--accent); color: #fff; padding: 12px 20px; border-radius: var(--radius);
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: var(--sheen-primary); color: var(--on-accent);
+  padding: 13px 22px; border-radius: var(--radius-pill);
   font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.85rem;
-  z-index: 50; border: var(--border); animation: pop 0.2s ease;
+  z-index: 50; border: var(--border); box-shadow: var(--shadow-hard);
+  animation: pop 0.28s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
-@keyframes pop { from { transform: translateX(-50%) scale(0.8); opacity: 0; } }
+@keyframes pop { from { transform: translateX(-50%) scale(0.7); opacity: 0; } }
 
 /* ============ boot splash ============ */
 .boot {
   position: fixed; inset: 0; z-index: 100;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px;
-  background: var(--bg-1);
+  gap: 18px;
+  background:
+    radial-gradient(110% 85% at 12% 0%, var(--bg-glow-1) 0%, transparent 55%),
+    var(--bg-1);
   transition: opacity 0.35s ease;
 }
 .boot-hide { opacity: 0; pointer-events: none; }
-.boot-globe { font-size: 3.4rem; line-height: 1; animation: bob 3s ease-in-out infinite; }
+.boot-globe { font-size: 3.6rem; line-height: 1; animation: bob 2.6s ease-in-out infinite; }
 .boot-text {
   font-family: "Archivo Black", sans-serif; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--ink); font-size: 0.9rem;
 }
 .boot-error { max-width: 340px; text-align: center; padding: 0 24px; color: var(--ink); }
 .boot-error p { margin: 8px 0; color: var(--ink-soft); line-height: 1.5; }
-.boot-error code { background: var(--card-2); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+.boot-error code { background: var(--card-2); padding: 3px 8px; border-radius: var(--radius-pill); font-size: 0.9em; }
 
 /* ============ reduced motion ============ */
 @media (prefers-reduced-motion: reduce) {

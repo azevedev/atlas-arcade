@@ -62,6 +62,18 @@ export class Autocomplete {
     this.items = suggest(q, this.kind, 200, this.exclude);
     if (!this.items.length) {
       this.active = -1;
+      // say "nothing matched" rather than silently collapsing the list, so a typo
+      // is distinguishable from the list simply not having opened
+      if (q.trim()) {
+        this.list.replaceChildren(
+          Object.assign(document.createElement("li"), {
+            className: "ac-empty",
+            textContent: "No match",
+          })
+        );
+        this.list.hidden = false;
+        return;
+      }
       return this._hide();
     }
     this.list.innerHTML = this.items

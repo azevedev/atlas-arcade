@@ -3,8 +3,9 @@
 A bold, arcade-style geography quiz. Name countries from their **flag**, **shape**,
 or where they light up on a spinning **globe**; guess **capitals** with a soft region
 hint; and **locate** places by tapping the globe (Geoguessr-style, scored by distance).
-Answer fast for more points, chain correct answers for a **combo**, and reveal **hints**
-when you're stuck (they cost points).
+Every question starts at full points; **hints** and wrong guesses cost you, and chaining
+correct answers builds a **combo**. Pinch or scroll to zoom the globe when a country is
+too small to tap, and tap any flag or shape to see it full size.
 
 **▶ Play: https://azevedev.github.io/atlas-arcade/**
 

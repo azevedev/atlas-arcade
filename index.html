@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Atlas Arcade — flags, capitals & the globe</title>
-    <meta name="description" content="A pastel arcade quiz: name countries from flags & shapes, guess capitals, and locate places on a spinning globe." />
+    <title>Atlas Arcade: flags, capitals & the globe</title>
+    <meta name="description" content="An arcade geography quiz: name countries from flags & shapes, guess capitals, and locate places on a spinning globe." />
 
     <!-- canonical -->
     <link rel="canonical" href="https://azevedev.github.io/atlas-arcade/" />
@@ -12,22 +12,22 @@
     <!-- Open Graph (LinkedIn, Facebook, Slack, Discord…) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Atlas Arcade" />
-    <meta property="og:title" content="Atlas Arcade — a pastel geography arcade" />
+    <meta property="og:title" content="Atlas Arcade: a geography arcade" />
     <meta property="og:description" content="Name countries from their flag or shape, guess capitals, and tap the spinning globe to locate places. Daily challenge with a shareable emoji grid. Free, no sign-up, plays offline." />
     <meta property="og:url" content="https://azevedev.github.io/atlas-arcade/" />
     <meta property="og:image" content="https://azevedev.github.io/atlas-arcade/assets/social/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Atlas Arcade — flags, capitals and a spinning globe" />
+    <meta property="og:image:alt" content="Atlas Arcade: flags, capitals and a spinning globe" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Atlas Arcade — a pastel geography arcade" />
+    <meta name="twitter:title" content="Atlas Arcade: a geography arcade" />
     <meta name="twitter:description" content="Name countries from their flag or shape, guess capitals, and tap the spinning globe. New daily challenge every day." />
     <meta name="twitter:image" content="https://azevedev.github.io/atlas-arcade/assets/social/og.png" />
 
     <!-- PWA / mobile -->
-    <meta name="theme-color" content="#ff4a1c" />
+    <meta name="theme-color" content="#d6ce93" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Atlas Arcade" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -54,37 +54,42 @@
       <!-- ================= MENU ================= -->
       <section id="screen-menu" class="screen active">
         <div class="menu-card">
-          <div class="logo">🌍</div>
-          <h1 class="title">Atlas Arcade</h1>
-          <p class="tagline">Flags · Capitals · Find it on the globe</p>
-
-          <div class="menu-buttons">
-            <button class="btn btn-primary" id="play-arcade">
-              <span class="btn-emoji">🕹️</span>
-              <span class="btn-labels"><b>Arcade</b><small>3 lives · chase a high score</small></span>
-            </button>
-            <button class="btn btn-secondary" id="play-daily">
-              <span class="btn-emoji">📅</span>
-              <span class="btn-labels"><b>Daily Challenge</b><small id="daily-sub">10 puzzles · new every day</small></span>
-            </button>
+          <div class="menu-brand">
+            <div class="logo">🌍</div>
+            <h1 class="title">Atlas Arcade</h1>
+            <p class="tagline">Name the country. Find it on the globe.</p>
           </div>
 
-          <div class="menu-meta">
-            <span id="best-chip" class="chip">🏆 Best: 0</span>
-            <span id="streak-chip" class="chip">🔥 Streak: 0</span>
-            <button id="mute-toggle" class="chip chip-btn">🔊 Sound</button>
-            <button id="theme-toggle" class="chip chip-btn">🌙 Theme</button>
-          </div>
+          <div class="menu-main">
+            <div class="menu-buttons">
+              <button class="btn btn-primary" id="play-arcade">
+                <span class="btn-emoji">🕹️</span>
+                <span class="btn-labels"><b>Arcade</b><small>3 lives · chase a high score</small></span>
+              </button>
+              <button class="btn btn-secondary" id="play-daily">
+                <span class="btn-emoji">📅</span>
+                <span class="btn-labels"><b>Daily Challenge</b><small id="daily-sub">10 puzzles · new every day</small></span>
+              </button>
+            </div>
 
-          <details class="howto">
-            <summary>How to play</summary>
-            <ul>
-              <li><b>Name the country</b> from its flag, its shape, or where it lights up on the globe.</li>
-              <li><b>Name the capital</b> — a soft blob shows roughly where it sits.</li>
-              <li><b>Locate it</b> — tap the spinning globe as close as you can.</li>
-              <li>Answer fast for more points. Stuck? Reveal a <b>hint</b> (costs points). Chain correct answers for a <b>combo</b>.</li>
-            </ul>
-          </details>
+            <div class="menu-meta">
+              <span id="best-chip" class="chip">🏆 Best: 0</span>
+              <span id="streak-chip" class="chip">🔥 Streak: 0</span>
+              <button id="mute-toggle" class="chip chip-btn">🔊 Sound</button>
+              <button id="theme-toggle" class="chip chip-btn">🌙 Theme</button>
+            </div>
+
+            <details class="howto">
+              <summary>How to play</summary>
+              <ul>
+                <li><b>Name the country</b> from its flag, its shape, or where it lights up on the globe.</li>
+                <li><b>Name the capital</b>. A soft blob shows roughly where it sits.</li>
+                <li><b>Locate it</b> by tapping the spinning globe as close as you can. Pinch, scroll, or use the +/− buttons to zoom in on small countries.</li>
+                <li>Tap a flag or shape to see it full size.</li>
+                <li>Every question starts at full points. Hints and wrong guesses cost you. Chain correct answers for a <b>combo</b>.</li>
+              </ul>
+            </details>
+          </div>
         </div>
       </section>
 
@@ -93,8 +98,8 @@
         <div class="menu-card">
           <button class="back-link" id="arcade-back">‹ Back</button>
           <div class="logo small">🕹️</div>
-          <h2 class="cats-title">Arcade — pick a mode</h2>
-          <p class="tagline">3 lives · chase a high score</p>
+          <h2 class="cats-title">Pick a mode</h2>
+          <p class="tagline">3 lives. Chase a high score.</p>
           <div class="cat-grid" id="arcade-cats"></div>
         </div>
       </section>
@@ -114,12 +119,19 @@
             <canvas id="globe"></canvas>
             <div id="globe-label" class="globe-label" hidden></div>
             <div id="locate-badge" class="locate-badge" hidden>tap the globe 👆</div>
+            <!-- pinch works on touch and the wheel works on trackpads; these are
+                 the discoverable + keyboard-reachable equivalent -->
+            <div class="globe-zoom" role="group" aria-label="Globe zoom">
+              <button type="button" class="globe-zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
+              <button type="button" class="globe-zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
+              <button type="button" class="globe-zoom-btn zoom-reset" id="zoom-reset" aria-label="Reset zoom" hidden>1×</button>
+            </div>
           </div>
 
-          <div class="clue-media" id="clue-media" hidden>
+          <button type="button" class="clue-media" id="clue-media" hidden aria-label="Enlarge the clue">
             <img id="clue-flag" class="clue-flag" alt="flag" hidden />
             <svg id="clue-shape" class="clue-shape" viewBox="0 0 260 260" hidden></svg>
-          </div>
+          </button>
 
           <!-- result banner: sits at the top so the globe stays visible -->
           <div class="reveal" id="reveal" hidden>
@@ -172,6 +184,17 @@
           </div>
         </div>
       </section>
+
+      <!-- full-size view of a flag / shape clue; closing returns to the question -->
+      <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+        <div class="lightbox-panel">
+          <div class="lightbox-head">
+            <h2 class="lightbox-title" id="lightbox-title">Clue</h2>
+            <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close and keep playing">✕</button>
+          </div>
+          <div class="lightbox-body" id="lightbox-body"></div>
+        </div>
+      </div>
 
       <div id="toast" class="toast" hidden></div>
     </div>
