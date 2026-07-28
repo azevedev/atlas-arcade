@@ -437,10 +437,11 @@ export function createUI() {
         els.lives.innerHTML = s;
       }
       els.lives.hidden = !hasLives;
-      els.progress.hidden = !hasLength;
-      if (hasLength) {
-        els.progress.textContent = `${Math.min(h.index + 1, h.total)} / ${h.total}`;
-      }
+      // Endless has no denominator, but "see how far you can go" is only a
+      // challenge if the player can see how far they have got.
+      els.progress.hidden = !hasLength && !h.endless;
+      if (hasLength) els.progress.textContent = `${Math.min(h.index + 1, h.total)} / ${h.total}`;
+      else if (h.endless) els.progress.textContent = `∞ ${h.index + 1}`;
       if (h.multiplier > 1) {
         els.mult.textContent = "x" + h.multiplier;
         els.combo.hidden = false;

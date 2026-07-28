@@ -3,14 +3,16 @@ import { Engine } from "../engine.js";
 import { makeRng } from "../rng.js";
 import { arcadeGenerator } from "../questions.js";
 
-// Easy is a finite set so it still has a finish and a score, the way the Daily
-// does. Normal and hard stay endless and end when the lives run out.
-export const EASY_LENGTH = 15;
+// Every round is a finite 15 so it has a finish and a score. Endless is opted
+// into from the victory screen instead of being the default, which means a run
+// that goes on forever is a choice rather than just what happens.
+export const ROUND_LENGTH = 15;
+export const EASY_LENGTH = ROUND_LENGTH; // kept: the difficulty note reads it
 
 export const DIFFICULTY_RULES = {
-  easy:   { lives: null, total: EASY_LENGTH, hints: true },
-  normal: { lives: 3,    total: null,        hints: true },
-  hard:   { lives: 3,    total: null,        hints: false },
+  easy:   { lives: null, total: ROUND_LENGTH, hints: true },
+  normal: { lives: 3,    total: ROUND_LENGTH, hints: true },
+  hard:   { lives: 3,    total: ROUND_LENGTH, hints: false },
 };
 
 export function startArcade(view, onEnd, category = "mixed", difficulty = "normal") {

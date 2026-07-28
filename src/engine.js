@@ -51,6 +51,8 @@ export class Engine {
     if (this.done) return;
     const q =
       this.cfg.queue !== undefined ? this.cfg.queue[this.index] : this.cfg.next(this.index);
+    // the generator ran out of countries: every one this category has, answered
+    if (!q) return this._end(false, { exhausted: true });
     this.q = q;
     this.qStart = performance.now();
     this.hintsUsed = 0;
@@ -82,6 +84,7 @@ export class Engine {
       mode: this.cfg.mode,
       category: this.cfg.category,
       difficulty: this.cfg.difficulty,
+      endless: !!this.endless,
     };
   }
 
@@ -216,26 +219,44 @@ export class Engine {
     if (this.done) return;
 
     this.index += 1;
-    const finished =
-      extra.gameOver ||
+    const hitLimit =
       (this.cfg.queue !== undefined && this.index >= this.cfg.queue.length) ||
       (this.cfg.queue === undefined && this.cfg.total != null && this.index >= this.cfg.total);
-    if (finished) this._end(!!extra.gameOver);
+    if (extra.gameOver) this._end(true);
+    else if (hitLimit) this._end(false, { completed: true });
     else this._serve();
   }
 
 
-  _end(gameOver) {
+  _end(gameOver, extra = {}) {
     this.done = true;
     this._stopTimer();
     if (gameOver) sfx.gameover();
     this.cfg.onEnd({
       mode: this.cfg.mode,
       difficulty: this.cfg.difficulty,
+      category: this.cfg.category,
       score: this.score,
       results: this.results,
       gameOver,
+      // reached the round limit with lives to spare
+      completed: !!extra.completed,
+      // answered every country this category can offer
+      exhausted: !!extra.exhausted,
+      // an endless run can still be resumed, a dead or spent one cannot
+      canContinue: !gameOver && !extra.exhausted && !!extra.completed && this.cfg.queue === undefined,
     });
+  }
+
+  // "Let us see how far you can go": lift the round limit and carry on with the
+  // same score, lives and already-asked countries rather than starting over.
+  resumeEndless() {
+    if (!this.done || this.cfg.queue !== undefined) return false;
+    this.done = false;
+    this.cfg.total = null;
+    this.endless = true;
+    this._serve();
+    return true;
   }
 }
 

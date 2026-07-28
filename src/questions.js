@@ -43,16 +43,19 @@ function pickCountry(rng, { tierWeights, exclude, filter, mode } = {}) {
   const all = usable(countries());
   if (!all.length) return null;
 
-  const pools = {
-    easy: usable(tierPool("easy", mode)),
-    medium: usable(tierPool("medium", mode)),
-    hard: usable(tierPool("hard", mode)),
-  };
-  // only weight tiers that still have someone left in them
-  const weights = ["easy", "medium", "hard"]
-    .filter((t) => pools[t].length)
+  // Only the tiers this difficulty draws from. Iterating all three would let an
+  // easy run fall through into hard-tier countries once easy and medium were
+  // used up, which is not what "every country at this difficulty" means.
+  const names = Object.keys(tierWeights);
+  const pools = {};
+  for (const t of names) pools[t] = usable(tierPool(t, mode));
+  // weight > 0 as well as non-empty: a zero-weight tier is one this difficulty
+  // does not use, and weightedPick would still return it if it were the only
+  // candidate left
+  const weights = names
+    .filter((t) => pools[t].length && tierWeights[t] > 0)
     .map((t) => ({ value: t, weight: tierWeights[t] }));
-  if (!weights.length) return pick(all, rng);
+  if (!weights.length) return null;
 
   const tier = weightedPick(weights, rng);
   return pick(pools[tier], rng);
@@ -112,12 +115,22 @@ function categorySpec(category, rng) {
 // original ramp that gets harder as the run goes on.
 export const DIFFICULTIES = ["easy", "normal", "hard"];
 
+// Which tiers a difficulty ever draws from. Declared rather than inferred from
+// the weights, because "every country at this difficulty" has to mean exactly
+// the same set to the picker and to the pool count. Easy never reaches the hard
+// tier and hard never drops back to easy, so their worlds are genuinely smaller.
+export const ACTIVE_TIERS = {
+  easy: ["easy", "medium"],
+  normal: ["easy", "medium", "hard"],
+  hard: ["medium", "hard"],
+};
+
 function tierWeightsFor(difficulty, index) {
   if (difficulty === "easy") {
-    return { easy: 8, medium: Math.min(2, 0.4 + index * 0.06), hard: 0 };
+    return { easy: 8, medium: Math.min(2, 0.4 + index * 0.06) };
   }
   if (difficulty === "hard") {
-    return { easy: 0, medium: Math.max(1, 4 - index * 0.12), hard: 2 + index * 0.18 };
+    return { medium: Math.max(1, 4 - index * 0.12), hard: 2 + index * 0.18 };
   }
   return {
     easy: Math.max(0.5, 6 - index * 0.25),
@@ -134,6 +147,34 @@ export function worldCupGenerator(rng, category = "mixed") {
   return inner;
 }
 
+// How many countries a category can ever offer, so the engine knows what
+// "finished the world" means before the run starts.
+export function poolSize(category, difficulty = "normal", poolFilter = null) {
+  const tiers = ACTIVE_TIERS[difficulty] || ACTIVE_TIERS.normal;
+  // A mixed round can reach a country through any of its three question types,
+  // so its pool is the union: a country that is hard to name from its flag may
+  // still be an easy capital. A single-category round has just the one mode.
+  const specs = category === "mixed" ? MIXED_SPECS : [categorySpec(category, () => 0)];
+  const reaches = (c, spec) => {
+    if (spec.filter && !spec.filter(c)) return false;
+    const tier = spec.mode && c.tiers ? c.tiers[spec.mode] : c.tier;
+    return tiers.includes(tier);
+  };
+  return countries().filter(
+    (c) => (!poolFilter || poolFilter(c)) && specs.some((spec) => reaches(c, spec))
+  ).length;
+}
+
+// The three shapes a mixed question can take, in the order the fallback tries
+// them. Mixed picks one at random per question; if that one has nobody left it
+// falls through to the others rather than declaring the world finished while
+// two thirds of it is still askable.
+const MIXED_SPECS = [
+  { type: "country", forceClue: null, filter: null, mode: undefined },
+  { type: "capital", forceClue: null, filter: null, mode: "capital" },
+  { type: "locate", forceClue: null, filter: null, mode: "locate" },
+];
+
 export function arcadeGenerator(rng, category = "mixed", difficulty = "normal", poolFilter = null) {
   // Every country seen this run, not a sliding window: a country asked once
   // does not come back until the player starts a new match. Shared across
@@ -142,21 +183,25 @@ export function arcadeGenerator(rng, category = "mixed", difficulty = "normal", 
   const used = new Set();
   return function next(index) {
     const tierWeights = tierWeightsFor(difficulty, index);
-    const spec = categorySpec(category, rng);
-    // the category filter and the pool filter both have to pass
-    const filter = poolFilter
-      ? (c) => poolFilter(c) && (!spec.filter || spec.filter(c))
-      : spec.filter;
-    let country = pickCountry(rng, { tierWeights, exclude: used, filter, mode: spec.mode });
-    if (!country) {
-      // Arcade is endless, so a long enough run can exhaust the pool. Nobody is
-      // getting through 194 questions on three lives, but the run must keep
-      // going rather than break, so start a fresh cycle.
-      used.clear();
-      country = pickCountry(rng, { tierWeights, filter, mode: spec.mode });
+    const first = categorySpec(category, rng);
+    const order =
+      category === "mixed"
+        ? [first, ...MIXED_SPECS.filter((s) => s.type !== first.type)]
+        : [first];
+    for (const spec of order) {
+      // the category filter and the pool filter both have to pass
+      const filter = poolFilter
+        ? (c) => poolFilter(c) && (!spec.filter || spec.filter(c))
+        : spec.filter;
+      const country = pickCountry(rng, { tierWeights, exclude: used, filter, mode: spec.mode });
+      if (!country) continue;
+      used.add(country.ccn3);
+      return buildQuestion(spec.type, country, rng, spec.forceClue);
     }
-    used.add(country.ccn3);
-    return buildQuestion(spec.type, country, rng, spec.forceClue);
+    // Nothing left in any shape the category can take: the player has been asked
+    // about every country it can offer. Returning null rather than recycling lets
+    // the engine treat that as finishing the world, which is the whole point.
+    return null;
   };
 }
 
@@ -170,7 +215,9 @@ export function dailyQueue(rng, n = 10) {
     const weights = { easy: 0, medium: 0, hard: 0 };
     weights[tier] = 1;
     const spec = categorySpec("mixed", rng);
-    const country = pickCountry(rng, { tierWeights: weights, exclude: used, filter: spec.filter, mode: spec.mode });
+    const country =
+      pickCountry(rng, { tierWeights: weights, exclude: used, filter: spec.filter, mode: spec.mode }) ||
+      pickCountry(rng, { tierWeights: { easy: 1, medium: 1, hard: 1 }, exclude: used, filter: spec.filter, mode: spec.mode });
     used.add(country.ccn3);
     return buildQuestion(spec.type, country, rng, spec.forceClue);
   });

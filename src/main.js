@@ -2,7 +2,7 @@
 import { loadData } from "./data.js";
 import { createUI } from "./ui.js";
 import { startArcade, arcadeBest, recordArcade, EASY_LENGTH } from "./modes/arcade.js";
-import { CATEGORIES, categoryLabel, categoryBlurb } from "./questions.js";
+import { CATEGORIES, categoryLabel, categoryBlurb, poolSize } from "./questions.js";
 import { startWorldCup, worldCupBest, recordWorldCup } from "./modes/worldcup.js";
 import {
   startDaily,
@@ -127,9 +127,36 @@ async function boot() {
     const correct = summary.results.filter((r) => r.correct).length;
     const total = summary.results.length;
 
-    $("results-title").textContent = t(
-      isDaily ? "results.daily" : summary.gameOver ? "results.over" : "results.nice"
-    );
+    // Four endings, and they should not look alike: ran out of lives, finished
+    // the 15, finished the Daily, or answered every country the mode had left.
+    const card = $("results-card");
+    const mark = $("triumph-mark");
+    const sub = $("results-sub");
+    const endless = $("endless-btn");
+    card.classList.toggle("results-triumph", !!summary.exhausted);
+    mark.hidden = !summary.exhausted;
+    endless.hidden = !summary.canContinue;
+
+    let titleKey = "results.nice";
+    if (isDaily) titleKey = "results.daily";
+    else if (summary.gameOver) titleKey = "results.over";
+    else if (summary.exhausted) titleKey = "results.world";
+    else if (summary.completed) titleKey = "results.victory";
+    $("results-title").textContent = t(titleKey);
+
+    if (summary.exhausted) {
+      const n =
+        summary.mode === "worldcup"
+          ? poolSize(summary.category, "normal", (c) => c.worldCup)
+          : poolSize(summary.category, summary.difficulty);
+      sub.textContent = t("results.worldSub", { n });
+      sub.hidden = false;
+    } else if (summary.canContinue) {
+      sub.textContent = t("results.endlessSub");
+      sub.hidden = false;
+    } else {
+      sub.hidden = true;
+    }
     $("results-score").textContent = summary.score.toLocaleString();
 
     let stats = `<span>✓ <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
@@ -236,6 +263,11 @@ async function boot() {
   $("arcade-back").onclick = () => ui.showScreen("menu");
   $("play-daily").onclick = () => begin("daily");
   $("again-btn").onclick = () => begin(currentMode, currentCategory);
+  // Endless carries the same run on rather than restarting it: same score, same
+  // lives, same countries already asked.
+  $("endless-btn").onclick = () => {
+    if (engine && engine.resumeEndless()) ui.showScreen("game");
+  };
   $("menu-btn").onclick = () => {
     ui.showScreen("menu");
     refreshMenu();

@@ -242,6 +242,40 @@
 .results-score small { display: block; color: var(--ink-soft); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.66rem; margin-top: 4px; }
 .results-stats { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; }
 .results-stats b { color: var(--ink); font-family: "Archivo Black", sans-serif; }
+.results-sub { margin: -4px 0 16px; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; line-height: 1.4; }
+
+/* Finishing every country in a mode is the rarest thing in the game, so it gets
+   an ending that does not look like any other: a gold card instead of the usual
+   cream one, a spinning globe, and a title that reads as an award. */
+.results-card.results-triumph {
+  background: linear-gradient(160deg, var(--custard), var(--bronze));
+  border-color: var(--ink);
+  box-shadow: var(--shadow-hard), 0 0 0 6px var(--sage), var(--shadow-soft);
+}
+/* The gold card is the same colour in both themes, so its text has to be too:
+   --ink flips to cream in dark mode, which would put cream on custard. --umber
+   is the fixed palette brown, and it measures 9.3:1 on the custard end of the
+   gradient and 6.8:1 on the bronze end. */
+.results-triumph #results-title { color: var(--umber); text-shadow: 3px 3px 0 var(--cream); }
+.results-triumph #results-score,
+.results-triumph .results-sub,
+.results-triumph .results-stats,
+.results-triumph .results-stats b,
+.results-triumph .results-score small { color: var(--umber); }
+/* the ghost button borrows page ink too, and it sits on the gold card */
+.results-triumph .btn-ghost { color: var(--umber); }
+.results-triumph .btn-secondary { background: var(--cream); color: var(--umber); border-color: var(--umber); }
+.triumph-mark {
+  font-size: 3.4rem; line-height: 1; margin-bottom: 6px;
+  animation: triumph-spin 6s linear infinite;
+  filter: drop-shadow(3px 3px 0 var(--cream));
+}
+@keyframes triumph-spin {
+  from { transform: rotate(-8deg) scale(1); }
+  50%  { transform: rotate(8deg) scale(1.08); }
+  to   { transform: rotate(-8deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .triumph-mark { animation: none; } }
 /* Title and date: ordinary text, free to wrap. Kept out of the pre block below
    because at the grid's type size a line like
    "Atlas Arcade · Desafio Diário 28/07/2026" simply ran off the card. */
