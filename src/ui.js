@@ -34,6 +34,8 @@ export function createUI() {
     },
     score: $("hud-score"),
     lives: $("hud-lives"),
+    hudMode: $("hud-mode"),
+    hudSub: $("hud-sub"),
     combo: $("hud-combo"),
     mult: $("hud-mult"),
     progress: $("hud-progress"),
@@ -410,6 +412,17 @@ export function createUI() {
 
     updateHud(h) {
       els.score.textContent = h.score.toLocaleString();
+
+      // Mode on top, then what narrows it: the category, plus the difficulty
+      // only where the player actually chose one (arcade). Daily is always the
+      // same shape and World Cup has no difficulty, so neither shows one.
+      els.hudMode.textContent = t(
+        h.mode === "daily" ? "menu.daily" : h.mode === "worldcup" ? "menu.worldcup" : "menu.arcade"
+      );
+      const sub = [];
+      if (h.category) sub.push(t(`cat.${h.category}`));
+      if (h.mode === "arcade" && h.difficulty) sub.push(t(`diff.${h.difficulty}`));
+      els.hudSub.textContent = sub.join(" · ");
       // Branch on the rules, not the mode: easy arcade has no lives but does
       // have a length, so it wants the daily's progress counter, and showing it
       // three empty life diamonds was just confusing.

@@ -72,6 +72,8 @@ export class Engine {
       index: this.index,
       total: this.cfg.total,
       mode: this.cfg.mode,
+      category: this.cfg.category,
+      difficulty: this.cfg.difficulty,
     };
   }
 

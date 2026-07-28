@@ -87,7 +87,7 @@
    straight into the globe, which is the thing the player is actually reading. */
 .hud {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 8px;
   padding: 7px 12px;
@@ -105,18 +105,43 @@
 .hud-score { display: flex; flex-direction: column; line-height: 1; }
 .hud-label { font-size: 0.54rem; letter-spacing: 0.18em; color: var(--ink-soft); font-weight: 800; }
 #hud-score { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; margin-top: 1px; }
-.hud-lives { justify-self: end; font-size: 1.05rem; letter-spacing: 3px; color: var(--accent-text); font-weight: 900; }
+/* What you are playing, between the score and the lives. Two short lines
+   rather than one long one: at 390px a single "ARCADE · FLAGS · NORMAL" does
+   not fit beside a score and three life markers. */
+.hud-meta {
+  display: flex; flex-direction: column; line-height: 1.2;
+  min-width: 0; justify-self: center; text-align: center;
+  padding: 0 6px;
+}
+.hud-meta .hud-label,
+.hud-sub {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.hud-sub {
+  font-size: 0.55rem; letter-spacing: 0.08em; font-weight: 800;
+  text-transform: uppercase; color: var(--ink);
+}
+/* Lives, progress and the combo badge share one right-hand slot. As separate
+   grid columns the combo appearing mid-run stole width from the score and the
+   mode readout, and they collided. */
+.hud-right { display: flex; align-items: center; gap: 8px; justify-self: end; }
+.hud-lives { font-size: 1.05rem; letter-spacing: 3px; color: var(--accent-text); font-weight: 900; }
 .hud-lives .dead { color: var(--ink-soft); opacity: 0.4; }
 /* a combo only exists while you are chaining correct answers, so it is green too */
 .hud-combo {
-  justify-self: end; font-family: "Archivo Black", sans-serif; color: var(--on-accent);
+  font-family: "Archivo Black", sans-serif; color: var(--on-accent);
   background: linear-gradient(180deg, #a8c47c, var(--ok)); border: 2px solid var(--line);
   padding: 5px 12px; border-radius: var(--radius-pill); font-size: 0.78rem;
   text-transform: uppercase; letter-spacing: 0.02em;
   box-shadow: 0 3px 0 var(--line);
   animation: pop 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
-.hud-progress { justify-self: end; font-family: "Archivo Black", sans-serif; color: var(--ink-soft); font-size: 0.9rem; }
+.hud-progress { font-family: "Archivo Black", sans-serif; color: var(--ink-soft); font-size: 0.9rem; }
+
+/* narrow screens: the badge still reads as a multiplier without the word */
+@media (max-width: 430px) {
+  .hud-combo .combo-word { display: none; }
+}
 
 .stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; }
 
@@ -318,11 +343,17 @@
 .menu-buttons .btn,
 .btn.cat-btn {
   display: grid;
-  grid-template-columns: 2.1rem 1fr;
+  /* Fixed track widths, identical on every button, and the pair is centred as a
+     block. That is what lets the icons line up AND the content sit centred: with
+     a flexible label column the block width would follow the text and the icons
+     would drift again. */
+  grid-template-columns: 2.1rem minmax(0, 13rem);
+  justify-content: center;
   align-items: center;
   gap: 14px;
-  text-align: left;
 }
+.menu-buttons .btn .btn-labels,
+.btn.cat-btn .btn-labels { align-items: center; text-align: center; }
 .menu-buttons .btn .btn-emoji,
 .btn.cat-btn .btn-emoji {
   justify-self: center;

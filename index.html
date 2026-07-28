@@ -122,9 +122,15 @@
         <header class="hud">
           <button class="hud-back" id="hud-back" data-i18n-aria="hud.back" aria-label="Back to menu">✕</button>
           <div class="hud-score"><span class="hud-label" data-i18n="hud.score">SCORE</span><span id="hud-score">0</span></div>
-          <div class="hud-lives" id="hud-lives"></div>
-          <div class="hud-combo" id="hud-combo" hidden><span id="hud-mult">x2</span> <span data-i18n="hud.combo">combo</span></div>
-          <div class="hud-progress" id="hud-progress" hidden></div>
+          <div class="hud-meta" id="hud-meta">
+            <span class="hud-label" id="hud-mode"></span>
+            <span class="hud-sub" id="hud-sub"></span>
+          </div>
+          <div class="hud-right">
+            <div class="hud-lives" id="hud-lives"></div>
+            <div class="hud-progress" id="hud-progress" hidden></div>
+            <div class="hud-combo" id="hud-combo" hidden><span id="hud-mult">x2</span> <span class="combo-word" data-i18n="hud.combo">combo</span></div>
+          </div>
         </header>
 
         <div class="stage">
