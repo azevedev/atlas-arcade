@@ -78,11 +78,14 @@
   --ok-text: #4a6330;
 
   /* Continue is "move on", not "you were right", so it must not be green and
-     must not be the rose accent either. Deep ocean blue, lifted straight off
-     the globe's own water, so the one cool colour on screen has a source.
-     Carries cream text at 4.6:1 on the light stop, 6.5:1 on the dark one. */
-  --sheen-blue: linear-gradient(180deg, #2b6f8d, #1f5872);
-  --on-blue: #efebce;
+     must not be the rose accent either. Sky blue lifted off the globe's own
+     atmosphere halo, so the one cool colour in the UI has a source.
+     Light-with-ink-text like every other button here, rather than the lone
+     dark-with-light-text button; also just reads more obviously blue.
+     Ink clears 7.3:1 on the dark stop. Mid blues are avoided on purpose: they
+     fail AA against both ink and cream. */
+  --sheen-blue: linear-gradient(180deg, #a8d5e6, #86bcd4);
+  --on-blue: #33231c;
 
   /* 2D-shader surfaces: a baked top-light gradient, a chunky offset shadow
      standing in for a hard cast shadow, and a soft tinted ambient shadow. */
