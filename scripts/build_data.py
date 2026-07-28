@@ -84,36 +84,30 @@ def load_wikidata_capitals():
                 e[k] = r[k]["value"]
     return out
 
-# Curated pt-BR capital names. Two reasons a capital lands here:
-#   1. Wikidata's pt-br label is wrong or unidiomatic for Brazil
-#      ("Cidade de Bruxelas", "Porto Luís", "Iamussucro", "São Domingos").
+# Curated pt-BR capital names. The bar is deliberately high: whenever Wikidata
+# has a Portuguese label it wins, even where the international spelling is also
+# common in Brazil. An earlier version of this list overrode a dozen perfectly
+# good Portuguese names (São Jorge -> "Saint George's", Bancoque -> "Bangkok")
+# on a judgement call about usage, which just left English on a Portuguese
+# screen. Both spellings are accepted as answers either way, so preferring the
+# Portuguese one costs the player nothing.
+#
+# What is left are the two cases the data genuinely gets wrong:
+#   1. The label is an artifact rather than a name ("Cidade de Bruxelas" is the
+#      disambiguated municipality; the city is Bruxelas).
 #   2. Wikidata's English label does not match the one this dataset uses, so the
-#      automatic join finds nothing (ATG, GNQ, MNG, NRU, NGA, SMR).
+#      automatic join finds nothing at all (ATG, GNQ, MNG, NRU, NGA, SMR).
 CAPITAL_PT_PATCH = {
-    "ATG": "Saint John's",
     "BEL": "Bruxelas",
-    "CIV": "Yamoussoukro",
-    "COG": "Brazzaville",
-    "DOM": "Santo Domingo",
-    "FSM": "Palikir",
+    "KWT": "Cidade do Kuwait",   # pt label is the bare country name
+    "KIR": "Tarawa do Sul",      # pt-br label reads "Taraua"
+    # join misses, filled from the Portuguese Wikipedia
+    "ATG": "Saint John's",
     "GNQ": "Malabo",
-    "GRD": "Saint George's",
-    "KIR": "Tarawa do Sul",
-    "KWT": "Cidade do Kuwait",
-    "MDA": "Chisinau",
-    "MLI": "Bamako",
     "MNG": "Ulan Bator",
-    "MUS": "Port Louis",
-    "MWI": "Lilongwe",
-    "NGA": "Abuja",
     "NRU": "Yaren",
-    "SMR": "San Marino",
-    "SYC": "Victoria",
-    "TCD": "N'Djamena",
-    "THA": "Bangkok",
-    "TJK": "Dushanbe",
-    "TKM": "Asgabat",
-    "VUT": "Port Vila",
+    "NGA": "Abuja",
+    "SMR": "São Marinho",
 }
 
 # mledoze's translations.por is EUROPEAN Portuguese, so the vowel before a nasal
