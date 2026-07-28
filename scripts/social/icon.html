@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- Temporary render target for assets/social/icon-*.png. Not shipped. -->
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../../styles/theme.css" />
+    <script src="../../vendor/d3.v7.min.js"></script>
+    <script src="../../vendor/topojson-client.min.js"></script>
+    <style>
+      html, body { width: 512px; height: 512px; margin: 0; overflow: hidden; }
+      body {
+        display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(120% 120% at 28% 12%, var(--cream) 0%, var(--custard) 55%, var(--bronze) 100%);
+      }
+      body::after { display: none; } /* no grain at icon scale, it just reads as noise */
+      /* .safe is the maskable variant: platforms crop to a circle, so the globe
+         is inset to the central 80% and the background bleeds to the edges. */
+      .box { width: 512px; height: 512px; display: flex; align-items: center; justify-content: center; }
+      body.safe .box { width: 400px; height: 400px; }
+      #globe { width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div class="box"><canvas id="globe"></canvas></div>
+    <script type="module">
+      import { loadData } from "../../src/data.js";
+      import { Globe } from "../../src/globe.js";
+      if (new URLSearchParams(location.search).has("safe")) document.body.classList.add("safe");
+      await loadData();
+      const g = new Globe(document.getElementById("globe"));
+      g.setIdle(false);
+      g.projection.rotate([20, -12, 0]);
+      g.resize();
+      await new Promise((res) => { const t = () => (g._tex ? res() : setTimeout(t, 60)); t(); });
+      await document.fonts.ready;
+      g.render(true);
+      window.__ogReady = true;
+    </script>
+  </body>
+</html>

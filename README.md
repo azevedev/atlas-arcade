@@ -9,7 +9,7 @@ too small to tap, and tap any flag or shape to see it full size.
 
 **▶ Play: https://azevedev.github.io/atlas-arcade/**
 
-![Atlas Arcade](./assets/social/og.png)
+![Atlas Arcade](./assets/social/og.jpg)
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-a480f0)
 ![No build step](https://img.shields.io/badge/build-none-59cbb0)
@@ -54,7 +54,7 @@ Vanilla JS (ES modules) + D3 (orthographic globe) + TopoJSON, all vendored in
 - `assets/data/countries.json` — trimmed country dataset (name, capital, lat/lng, tier)
 - `assets/geo/countries-{50m,110m}.json` — country shapes (world-atlas TopoJSON)
 - `assets/flags/*.svg` — one flag per country
-- `assets/social/*` — Open Graph image + PWA icons
+- `assets/social/*` — Open Graph card + PWA icons (rendered by `scripts/social/`)
 - `assets/fonts/*` — Archivo Black (display) + Inter (UI)
 
 ### Regenerating the data
