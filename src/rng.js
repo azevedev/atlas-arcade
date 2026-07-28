@@ -52,6 +52,14 @@ export function weightedPick(items, rng) {
 
 // today's date key in UTC -> "YYYY-MM-DD" so the Daily Challenge (and its share
 // grid) is genuinely the same for everyone worldwide, not shifted by timezone.
+// Display form of a day key. Deliberately separate from todayKey(): that value
+// seeds the daily puzzle and keys localStorage, so its format must never move
+// or every streak resets and the puzzle changes.
+export function formatDay(key) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key || "");
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : key;
+}
+
 export function todayKey(d = new Date()) {
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");

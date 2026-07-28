@@ -11,7 +11,7 @@ import {
   dailyKey,
   dailyPlayed,
 } from "./modes/daily.js";
-import { buildShareText, copyShare } from "./share.js";
+import { buildShare, copyShare } from "./share.js";
 import { toggleMute, isMuted } from "./audio.js";
 import { t, getLang, setLang, applyStaticText } from "./i18n.js";
 
@@ -139,6 +139,7 @@ async function boot() {
     }
 
     const shareEl = $("share-grid");
+    const shareHead = $("share-head");
     const shareBtn = $("share-btn");
     if (isDaily) {
       if (!lastDaily || lastDaily !== dailyKey()) {
@@ -148,16 +149,19 @@ async function boot() {
         }
         lastDaily = dailyKey();
       }
-      const text = buildShareText(summary.results, dailyKey(), summary.score);
-      shareEl.textContent = text;
+      const share = buildShare(summary.results, dailyKey(), summary.score);
+      shareEl.textContent = share.grid;
       shareEl.hidden = false;
+      shareHead.innerHTML = `<span>${share.head}</span><span>${share.meta}</span>`;
+      shareHead.hidden = false;
       shareBtn.hidden = false;
       shareBtn.onclick = async () => {
-        const ok = await copyShare(text);
+        const ok = await copyShare(share.text);
         ui.toast(t(ok ? "results.copied" : "results.copyFailed"));
       };
     } else {
       shareEl.hidden = true;
+      shareHead.hidden = true;
       shareBtn.hidden = true;
     }
 

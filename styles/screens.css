@@ -217,11 +217,28 @@
 .results-score small { display: block; color: var(--ink-soft); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.66rem; margin-top: 4px; }
 .results-stats { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; color: var(--ink-soft); font-weight: 600; font-size: 0.9rem; }
 .results-stats b { color: var(--ink); font-family: "Archivo Black", sans-serif; }
+/* Title and date: ordinary text, free to wrap. Kept out of the pre block below
+   because at the grid's type size a line like
+   "Atlas Arcade · Desafio Diário 28/07/2026" simply ran off the card. */
+.share-head {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--card-2); border: 2px solid var(--line);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 12px 14px 8px; margin: 0;
+  font-family: "Inter", sans-serif; font-weight: 700; font-size: 0.82rem;
+  color: var(--ink); line-height: 1.35;
+  overflow-wrap: anywhere;
+  box-shadow: inset 0 3px 0 rgba(51, 35, 28, 0.12);
+}
+.share-head span:last-child { color: var(--ink-soft); font-weight: 600; }
 .share-grid {
   font-size: 1.35rem; line-height: 1.35; background: var(--card-2);
-  border: 2px solid var(--line); border-radius: var(--radius); padding: 15px; margin: 0 0 18px;
-  white-space: pre; font-family: ui-monospace, monospace;
-  box-shadow: inset 0 3px 0 rgba(51, 35, 28, 0.12);
+  border: 2px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
+  padding: 4px 14px 14px; margin: 0 0 18px;
+  /* pre-wrap, not pre: five cells a row never needs to wrap, but if a narrow
+     screen ever forces it the block still stays inside the card */
+  white-space: pre-wrap; font-family: ui-monospace, monospace;
 }
 .results-buttons { display: flex; flex-direction: column; gap: 12px; }
 

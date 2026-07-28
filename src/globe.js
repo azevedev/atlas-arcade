@@ -509,7 +509,11 @@ export class Globe {
       lastY = 0,
       lastT = 0;
 
-    const sens = () => 78 / this.projection.scale(); // deg per px, so drag slows as you zoom in
+    // Degrees turned per pixel dragged, divided by the projection scale so the
+    // drag slows down as you zoom in. Lowered 35% from 78: the globe outran the
+    // finger and overshot what the player was aiming at.
+    const DRAG_DEG_PER_PX = 50.7;
+    const sens = () => DRAG_DEG_PER_PX / this.projection.scale();
 
     // distance between the first two active pointers
     const spread = () => {
