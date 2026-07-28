@@ -302,7 +302,7 @@ export function createUI() {
         setFlagSrc(img, c.cca2);
         img.alt = "";
         chip.appendChild(img);
-        chip.append(" Flag");
+        chip.append(" " + t("clue.flag"));
         chip.setAttribute("aria-label", t("clue.flagHint"));
         chip.addEventListener("click", () => openLightbox(t("clue.flag"), () => flagNode(c)));
       } else if (hint.kind === "shape") {
@@ -311,7 +311,7 @@ export function createUI() {
         svg.setAttribute("viewBox", "0 0 80 80");
         drawSilhouette(svg, c, { size: 80 });
         chip.appendChild(svg);
-        chip.append(" Shape");
+        chip.append(" " + t("clue.shape"));
         chip.setAttribute("aria-label", t("clue.shapeHint"));
         chip.addEventListener("click", () => openLightbox(t("clue.shape"), () => shapeNode(c)));
       } else {

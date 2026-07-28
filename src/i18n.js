@@ -12,6 +12,7 @@ const STORE_KEY = "aa_lang";
 const UI = {
   en: {
     "app.title": "Atlas Arcade: flags, capitals & the globe",
+    "app.description": "An arcade geography quiz: name countries from flags & shapes, guess capitals, and locate places on a spinning globe.",
     "app.loading": "Loading Atlas Arcade…",
     "app.tagline": "Name the country. Find it on the globe.",
 
@@ -138,6 +139,7 @@ const UI = {
 
   "pt-BR": {
     "app.title": "Atlas Arcade: bandeiras, capitais e o globo",
+    "app.description": "Um quiz de geografia estilo arcade: descubra países pela bandeira ou pelo contorno, acerte as capitais e ache lugares no globo.",
     "app.loading": "Carregando o Atlas Arcade…",
     "app.tagline": "Descubra o país. Ache no globo.",
 
@@ -344,12 +346,15 @@ export function regionIn(name) {
 //   data-i18n-html  -> innerHTML, for the few strings with <b> in them
 //   data-i18n-aria  -> aria-label
 //   data-i18n-ph    -> placeholder
+//   data-i18n-content -> content, for <meta>
 export function applyStaticText(root = document) {
   for (const el of root.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
   for (const el of root.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
   for (const el of root.querySelectorAll("[data-i18n-aria]"))
     el.setAttribute("aria-label", t(el.dataset.i18nAria));
   for (const el of root.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
+  for (const el of root.querySelectorAll("[data-i18n-content]"))
+    el.setAttribute("content", t(el.dataset.i18nContent));
   document.title = t("app.title");
 }
 

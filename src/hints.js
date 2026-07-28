@@ -20,15 +20,41 @@ function firstLetter(q) {
   return t ? t[0].toUpperCase() : "?";
 }
 
-function lengthPattern(q) {
-  const t = answerText(q);
-  return t
-    .split("")
-    .map((ch, i) => (i === 0 ? ch.toUpperCase() : ch === " " ? "  " : "_"))
-    .join(" ");
+// A run of spaces is not a readable word break: "Á _ _ _ _ _    _ _    _ _ _" is
+// impossible to count. Words are separated by a visible slash instead, so
+// "África do Sul" reads as three words of 6, 2 and 3 letters at a glance.
+const WORD_BREAK = "/";
+
+function joinWords(cells) {
+  return cells
+    .map((word) => word.join(" "))
+    .join(`  ${WORD_BREAK}  `);
+}
+
+// splits the answer into per-word arrays, running `cell` over each character
+function patternCells(word, cell) {
+  const out = [[]];
+  [...word].forEach((ch, i) => {
+    if (ch === " ") {
+      out.push([]);
+      return;
+    }
+    out[out.length - 1].push(cell(ch, i));
+  });
+  return out.filter((w) => w.length);
 }
 
 const LETTER = /[a-zà-öø-ÿ]/i;
+
+function lengthPattern(q) {
+  const word = answerText(q);
+  return joinWords(
+    patternCells(word, (ch, i) => {
+      if (!LETTER.test(ch)) return ch; // hyphens, apostrophes and dots are structure
+      return i === 0 ? ch.toUpperCase() : "_";
+    })
+  );
+}
 
 // Same skeleton as the pattern, with some letters filled in.
 //
@@ -55,14 +81,13 @@ function revealPattern(q) {
   const show = new Set(rest.slice(0, budget - 1));
   show.add(firstIdx);
 
-  return chars
-    .map((ch, i) => {
-      if (ch === " ") return "  ";
+  return joinWords(
+    patternCells(word, (ch, i) => {
       if (!LETTER.test(ch)) return ch; // hyphens and apostrophes are structure
       if (i === firstIdx) return ch.toUpperCase();
       return show.has(i) ? ch.toLowerCase() : "_";
     })
-    .join(" ");
+  );
 }
 
 // Facts the question puts on screen for free, before any hint is spent.
