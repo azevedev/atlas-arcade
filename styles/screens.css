@@ -11,7 +11,15 @@
 }
 /* Everything on this screen scales with the viewport so the card still fits a
    360x640 phone without scrolling. It used to overflow by 93px there. */
-.logo { font-size: clamp(2.4rem, 11vw, 3.6rem); line-height: 1; animation: bob 4s ease-in-out infinite; }
+/* Decorative only. It must never take a click: the bob animation puts a
+   transform on it, which creates a stacking context, which painted this
+   full-width block on top of the absolutely-positioned back button and
+   swallowed everything but its top 2px. */
+.logo {
+  font-size: clamp(2.4rem, 11vw, 3.6rem); line-height: 1;
+  animation: bob 4s ease-in-out infinite;
+  pointer-events: none;
+}
 @keyframes bob { 50% { transform: translateY(-9px) rotate(-6deg); } }
 .title {
   display: inline-block;
@@ -57,9 +65,14 @@
 /* ================= ARCADE CATEGORY PICKER ================= */
 #screen-arcade { align-items: center; justify-content: center; padding: 24px; }
 .back-link {
-  position: absolute; top: 16px; left: 16px; border: none; background: none;
+  position: absolute; top: 10px; left: 10px; border: none; background: none;
   color: var(--ink-soft); font-family: "Inter", sans-serif; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; cursor: pointer; padding: 6px 8px;
+  text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; cursor: pointer;
+  /* explicit stacking so it cannot fall behind a decorative sibling again */
+  z-index: 2;
+  /* 44px minimum touch target, matching the other controls */
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding: 6px 14px;
 }
 .back-link:hover { color: var(--accent-text); }
 .menu-card { position: relative; }
