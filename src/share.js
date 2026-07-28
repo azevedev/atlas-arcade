@@ -16,7 +16,7 @@ export function buildShareText(results, dateKey, score) {
   const grid = chunk(cells, 5)
     .map((row) => row.join(""))
     .join("\n");
-  return `Atlas Arcade — Daily ${dateKey}\n★ ${score.toLocaleString()} pts\n${grid}`;
+  return `Atlas Arcade Daily ${dateKey}\n★ ${score.toLocaleString()} pts\n${grid}`;
 }
 
 export async function copyShare(text) {

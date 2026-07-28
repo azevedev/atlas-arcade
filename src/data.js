@@ -9,6 +9,13 @@ let FEATURES = null; // Map ccn3 -> detailed (50m) GeoJSON feature
 let byCcn3 = null;
 let globe = null; // { land, borders } from 110m for fast rendering
 
+// Spherical area of a feature, guarding against inverted winding reporting the
+// complement (nearly the whole sphere) instead of the polygon itself.
+function sphericalArea(feature) {
+  const a = d3.geoArea(feature);
+  return a > 2 * Math.PI ? 4 * Math.PI - a : a;
+}
+
 export async function loadData() {
   const [cj, t50, t110] = await Promise.all([
     fetch("./assets/data/countries.json").then((r) => r.json()),
@@ -19,7 +26,15 @@ export async function loadData() {
 
   const fc = topojson.feature(t50, t50.objects.countries);
   FEATURES = new Map();
-  for (const f of fc.features) FEATURES.set(String(f.id), f);
+  // A few ids are reused in the 50m file: 036 is both Australia and its external
+  // territory "Ashmore and Cartier Is.". A plain set() lets the last one win, which
+  // hands Australia a 5-point rectangle in the Timor Sea as its shape, highlight
+  // and blob. On a collision, keep the larger landmass.
+  for (const f of fc.features) {
+    const id = String(f.id);
+    const prev = FEATURES.get(id);
+    if (!prev || sphericalArea(f) > sphericalArea(prev)) FEATURES.set(id, f);
+  }
 
   globe = {
     land: topojson.feature(t110, t110.objects.land),

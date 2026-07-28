@@ -1,12 +1,19 @@
 // UI controller: owns the DOM, the globe and the autocomplete, and implements the
 // `view` interface the engine drives.
-import { Globe } from "./globe.js";
+import { Globe, cssVar } from "./globe.js";
 import { Autocomplete } from "./input.js";
 import { drawSilhouette } from "./silhouette.js";
 import { featureFor, countryAtPoint, regionArea } from "./data.js";
 import { formatTime } from "./scoring.js";
 
 const $ = (id) => document.getElementById(id);
+
+// Coarse pointer = an on-screen keyboard, which costs a viewport resize every
+// time it opens. Used to decide when NOT to grab focus.
+const isTouch = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia &&
+  window.matchMedia("(pointer: coarse)").matches;
 
 function blobRadius(country) {
   const f = featureFor(country);
@@ -48,10 +55,21 @@ export function createUI() {
     revealPoints: $("reveal-points"),
     revealContinue: $("reveal-continue"),
     toast: $("toast"),
+    zoomIn: $("zoom-in"),
+    zoomOut: $("zoom-out"),
+    zoomReset: $("zoom-reset"),
+    lightbox: $("lightbox"),
+    lightboxTitle: $("lightbox-title"),
+    lightboxBody: $("lightbox-body"),
+    lightboxClose: $("lightbox-close"),
   };
 
   const globe = new Globe($("globe"), {
     onPick: (p) => cbs.locate && cbs.locate(p),
+    // the clue card sits over the globe, so step it aside as soon as the player
+    // starts reading the globe underneath it
+    onInteract: () => compactClue(true),
+    onZoom: (z) => syncZoomControls(z),
   });
   globe.start();
 
@@ -62,20 +80,42 @@ export function createUI() {
   const cbs = {};
   els.btnHint.addEventListener("click", () => cbs.hint && cbs.hint());
   els.btnSkip.addEventListener("click", () => cbs.skip && cbs.skip());
-  window.addEventListener("resize", () => globe.resize());
+  // coalesce resize bursts (keyboard open, URL bar collapse, rotation) into one
+  // measurement per frame
+  let resizeRaf = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => globe.resize());
+  });
+
+  // ---------- globe zoom controls ----------
+  function syncZoomControls(z) {
+    els.zoomIn.disabled = z >= 7.99;
+    els.zoomOut.disabled = z <= 1.001;
+    els.zoomReset.hidden = z <= 1.001;
+  }
+  // using the controls counts as reading the globe, so the clue steps aside too
+  els.zoomIn.addEventListener("click", () => { compactClue(true); globe.zoomBy(1.4); });
+  els.zoomOut.addEventListener("click", () => { compactClue(true); globe.zoomBy(1 / 1.4); });
+  els.zoomReset.addEventListener("click", () => { compactClue(true); globe.resetZoom(); });
+  syncZoomControls(globe.getZoom());
 
   function showScreen(name) {
     for (const [k, el] of Object.entries(els.screens)) el.classList.toggle("active", k === name);
     if (name === "game") requestAnimationFrame(() => globe.resize());
   }
 
-  function placeLabel(point, text) {
+  function placeLabel(point, text, ok = false) {
     const { x, y, visible } = globe.projectPoint(point);
-    if (!visible) {
+    // zoomed in, a point can face the viewer but still fall outside the canvas
+    const inCanvas =
+      x >= 0 && y >= 0 && x <= globe.canvas.clientWidth && y <= globe.canvas.clientHeight;
+    if (!visible || !inCanvas) {
       els.globeLabel.hidden = true;
       return;
     }
     els.globeLabel.textContent = text;
+    els.globeLabel.classList.toggle("ok", !!ok);
     els.globeLabel.style.left = globe.canvas.offsetLeft + x + "px";
     els.globeLabel.style.top = globe.canvas.offsetTop + y + "px";
     els.globeLabel.hidden = false;
@@ -110,7 +150,9 @@ export function createUI() {
     els.clueMedia.hidden = false;
   }
   function showShape(country) {
-    drawSilhouette(els.shape, country, { color: "#8a7bd8" });
+    // fill is overridden by CSS so the shape re-tints with the theme; the token
+    // here is only the pre-paint value
+    drawSilhouette(els.shape, country, { color: cssVar("--accent", "#bb8588") });
     setHidden(els.shape, false);
     els.flag.hidden = true;
     els.clueMedia.hidden = false;
@@ -119,7 +161,67 @@ export function createUI() {
     els.clueMedia.hidden = true;
     els.flag.hidden = true;
     setHidden(els.shape, true);
+    compactClue(false);
   }
+  function compactClue(on) {
+    els.clueMedia.classList.toggle("compact", !!on);
+  }
+
+  // ---------- clue lightbox ----------
+  // A full-size look at a flag or a shape. Purely a view: the question stays
+  // exactly as it was, and closing drops the player straight back into it.
+  let lastLightboxTrigger = null;
+  let currentCountry = null; // the country being asked about right now
+
+  function openLightbox(title, build) {
+    lastLightboxTrigger = document.activeElement;
+    els.lightboxTitle.textContent = title;
+    els.lightboxBody.replaceChildren(build());
+    els.lightbox.hidden = false;
+    els.lightboxClose.focus();
+  }
+
+  function closeLightbox() {
+    if (els.lightbox.hidden) return;
+    els.lightbox.hidden = true;
+    els.lightboxBody.replaceChildren();
+    // hand focus back so the keyboard player does not lose their place
+    if (lastLightboxTrigger && document.contains(lastLightboxTrigger)) {
+      lastLightboxTrigger.focus();
+    } else {
+      ac.refocus();
+    }
+    lastLightboxTrigger = null;
+  }
+
+  function flagNode(country) {
+    const img = document.createElement("img");
+    setFlagSrc(img, country.cca2);
+    img.alt = `Flag of the country to guess`;
+    return img;
+  }
+  function shapeNode(country) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    drawSilhouette(svg, country, { size: 420 });
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Outline of the country to guess");
+    return svg;
+  }
+
+  els.lightboxClose.addEventListener("click", closeLightbox);
+  els.lightbox.addEventListener("click", (e) => {
+    if (e.target === els.lightbox) closeLightbox(); // click the backdrop to dismiss
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeLightbox();
+  });
+
+  // the main clue card opens itself full size, in whichever state it is in
+  els.clueMedia.addEventListener("click", () => {
+    if (!currentCountry) return;
+    if (!els.flag.hidden) openLightbox("Flag", () => flagNode(currentCountry));
+    else openLightbox("Shape", () => shapeNode(currentCountry));
+  });
 
   const view = {
     onAnswer: (cb) => (cbs.answer = cb),
@@ -131,12 +233,15 @@ export function createUI() {
       els.reveal.hidden = true;
       els.globeLabel.hidden = true;
       els.hintLog.innerHTML = "";
+      closeLightbox();
       hideMedia();
       globe.clearAll();
+      globe.resetZoom(); // every question starts from the whole globe
       globe.disablePick();
       els.locateBadge.hidden = true;
       this.setPrompt(q.prompt);
       const c = q.country;
+      currentCountry = c;
 
       if (q.type === "country") {
         if (q.clueMode === "flag") {
@@ -155,7 +260,7 @@ export function createUI() {
       } else if (q.type === "capital") {
         globe.setIdle(false);
         globe.rotateTo(c.ll, 700).then(() => {
-          globe.highlight(c, "#ffe0a3");
+          globe.highlight(c, cssVar("--globe-capital", "#d6ce93"));
           globe.setBlob(c.cap, blobRadius(c));
         });
       } else {
@@ -170,6 +275,8 @@ export function createUI() {
 
     setHintCount(n) {
       els.hintCount.textContent = n > 0 ? n : "";
+      // hide, not just empty: an empty .pill still paints as a stray blob
+      els.hintCount.hidden = n <= 0;
       els.btnHint.disabled = n <= 0;
     },
 
@@ -177,25 +284,35 @@ export function createUI() {
     // (the shape / flag / prompt stays exactly where it is).
     applyHint(q, hint) {
       const c = q.country;
-      const chip = document.createElement("span");
+      // media hints are buttons: the thumbnail is too small to read, so tapping
+      // it opens the same full-size view as the main clue card
+      const media = hint.kind === "flag" || hint.kind === "shape";
+      const chip = document.createElement(media ? "button" : "span");
       chip.className = "hint";
 
-      if (hint.kind === "flag") {
+      if (media) {
+        chip.type = "button";
         chip.classList.add("hint-media");
+      }
+
+      if (hint.kind === "flag") {
         const img = document.createElement("img");
         img.className = "hint-flag";
         setFlagSrc(img, c.cca2);
-        img.alt = "flag";
+        img.alt = "";
         chip.appendChild(img);
         chip.append(" Flag");
+        chip.setAttribute("aria-label", "Flag hint, enlarge");
+        chip.addEventListener("click", () => openLightbox("Flag", () => flagNode(c)));
       } else if (hint.kind === "shape") {
-        chip.classList.add("hint-media");
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("class", "hint-shape");
         svg.setAttribute("viewBox", "0 0 80 80");
         drawSilhouette(svg, c, { size: 80 });
         chip.appendChild(svg);
         chip.append(" Shape");
+        chip.setAttribute("aria-label", "Shape hint, enlarge");
+        chip.addEventListener("click", () => openLightbox("Shape", () => shapeNode(c)));
       } else {
         if (hint.kind === "length") chip.classList.add("mono");
         chip.textContent = hint.label;
@@ -230,7 +347,10 @@ export function createUI() {
         ac.setKind(q.answerKind);
         ac.enable(q.answerKind === "capital" ? "Name the capital…" : "Name the country…");
         globe.disablePick();
-        setTimeout(() => ac.focus(), 60);
+        // Only steal focus where a keyboard is already on screen. On touch,
+        // autofocus throws the on-screen keyboard up on every single question,
+        // which resizes the viewport twice per turn and buries the globe.
+        if (!isTouch()) setTimeout(() => ac.focus(), 60);
       }
     },
 
@@ -304,9 +424,11 @@ export function createUI() {
     reveal(q, res) {
       return new Promise((resolve) => {
         const c = q.country;
+        closeLightbox();
         hideMedia();
         els.locateBadge.hidden = true;
         globe.setIdle(false);
+        globe.resetZoom(); // frame the whole answer, not whatever the player zoomed into
         if (q.type === "locate") globe.clearBlob(); // drop any leftover hint area
         // which country did the player actually tap? (null = open ocean)
         const tapped =
@@ -318,16 +440,25 @@ export function createUI() {
           q.type === "locate" && res.guess && !res.correct
             ? d3.geoInterpolate(res.guess, c.ll)(0.5)
             : c.ll;
+        // answer = the rose accent; the player's tap = sage. Both are palette
+        // colours, so the reveal never introduces an off-palette hue.
+        const tapColor = cssVar("--globe-tap", "#7d7d5c");
+        const tapPin = cssVar("--globe-tap-pin", "#d6ce93");
         globe.rotateTo(focus, 700).then(() => {
-          globe.highlight(c, "#ff4a1c"); // the correct place, in brand orange
-          const markers = [{ point: c.cap, color: "#ff4a1c" }];
+          // green when you got it, accent when you did not: the globe carries the
+          // same right/wrong signal as the banner
+          globe.highlight(c, res.correct ? cssVar("--globe-correct", "#8fae62") : null);
+          const markers = [{
+            point: c.cap,
+            color: res.correct ? cssVar("--globe-correct", "#8fae62") : cssVar("--globe-marker", "#9c6a6d"),
+          }];
           if (q.type === "locate" && res.guess && !res.correct) {
-            if (tapped) globe.highlightSecondary(tapped, "#2f6bff"); // where you tapped
-            globe.setArc(res.guess, c.ll, "#9a8f74"); // line from tap to answer
-            markers.push({ point: res.guess, color: "#2f6bff" });
+            if (tapped) globe.highlightSecondary(tapped, tapColor); // where you tapped
+            globe.setArc(res.guess, c.ll, cssVar("--globe-arc", "#6b5548")); // line from tap to answer
+            markers.push({ point: res.guess, color: tapPin });
           }
           globe.setMarkers(markers);
-          placeLabel(c.ll, `${c.name} · ${c.capital}`);
+          placeLabel(c.ll, `${c.name} · ${c.capital}`, res.correct);
         });
 
         const answer = q.answerKind === "capital" ? c.capital : c.name;
@@ -336,7 +467,7 @@ export function createUI() {
         if (q.type === "locate") {
           els.revealText.innerHTML = res.correct
             ? `<b>${c.name}</b>`
-            : `<b>${c.name}</b> — you tapped <b>${tapped ? tapped.name : "open ocean"}</b>`;
+            : `<b>${c.name}</b>. You tapped <b>${tapped ? tapped.name : "open ocean"}</b>`;
         } else if (res.correct) {
           els.revealText.innerHTML = `<b>${answer}</b>`;
         } else {
@@ -349,15 +480,17 @@ export function createUI() {
 
         const ptsEl = els.revealPoints;
         const t = res.timeMs != null ? formatTime(res.timeMs) : "";
+        // at most one middle dot per line: distance keeps the separator, time reads "in 4.2s"
         if (res.points > 0) {
           const dist = q.type === "locate" && res.distanceKm != null
             ? `${Math.round(res.distanceKm).toLocaleString()} km · ` : "";
-          ptsEl.textContent = `${dist}+${res.points.toLocaleString()}${res.multiplier > 1 ? " (x" + res.multiplier + ")" : ""}${t ? " · " + t : ""}`;
+          ptsEl.textContent = `${dist}+${res.points.toLocaleString()}${res.multiplier > 1 ? " (x" + res.multiplier + ")" : ""}${t ? " in " + t : ""}`;
           ptsEl.className = "reveal-points plus";
         } else {
           const dist = q.type === "locate" && res.distanceKm != null
-            ? `${Math.round(res.distanceKm).toLocaleString()} km away · ` : "";
-          ptsEl.textContent = (dist || (res.skipped ? "skipped · " : "")) + (t || "");
+            ? `${Math.round(res.distanceKm).toLocaleString()} km away` : "";
+          const lead = dist || (res.skipped ? "skipped" : "");
+          ptsEl.textContent = lead && t ? `${lead} in ${t}` : lead || t || "";
           ptsEl.className = "reveal-points";
         }
 
