@@ -7,9 +7,12 @@
 // "Located in Western Europe": in both cases the player can already see it.
 import { continentOf } from "./geo.js";
 import { makeRng, shuffle } from "./rng.js";
+import { t, tRegion, regionIn, countryName, capitalName, getLang } from "./i18n.js";
 
+// The answer in the language being played, so the letter hints spell the word
+// the player is actually being asked for.
 function answerText(q) {
-  return q.answerKind === "capital" ? q.country.capital : q.country.name;
+  return q.answerKind === "capital" ? capitalName(q.country) : countryName(q.country);
 }
 
 function firstLetter(q) {
@@ -37,8 +40,8 @@ const LETTER = /[a-zà-öø-ÿ]/i;
 // The pick is seeded from the answer itself, so it is stable for a given word
 // and every player sees the same letters in the Daily Challenge.
 function revealPattern(q) {
-  const t = answerText(q);
-  const chars = t.split("");
+  const word = answerText(q);
+  const chars = word.split("");
 
   const letterIdx = [];
   for (let i = 0; i < chars.length; i++) {
@@ -48,7 +51,7 @@ function revealPattern(q) {
 
   const firstIdx = letterIdx[0];
   const budget = Math.max(1, Math.floor(letterIdx.length / 2)); // never past half
-  const rest = shuffle(letterIdx.slice(1), makeRng(`reveal:${t}`));
+  const rest = shuffle(letterIdx.slice(1), makeRng(`reveal:${getLang()}:${word}`));
   const show = new Set(rest.slice(0, budget - 1));
   show.add(firstIdx);
 
@@ -93,14 +96,14 @@ export function hintPlan(q) {
   const canShape = !!(c.shapeClue && c.feature);
 
   const hints = {
-    shape: { kind: "shape", label: "Shape revealed" },
-    flag: { kind: "flag", label: "Flag revealed" },
-    region: { kind: "region", scope: "region", label: `Region: ${c.region || "unknown"}` },
-    continent: { kind: "region", scope: "subregion", label: `Located in ${continentOf(c)}` },
-    first: { kind: "first", label: `Starts with “${firstLetter(q)}”` },
-    length: { kind: "length", label: `Pattern: ${lengthPattern(q)}` },
-    reveal: { kind: "length", label: `Letters: ${revealPattern(q)}` },
-    position: { kind: "position", label: "Location revealed on the globe" },
+    shape: { kind: "shape", label: t("hint.shape") },
+    flag: { kind: "flag", label: t("hint.flag") },
+    region: { kind: "region", scope: "region", label: t("hint.region", { region: tRegion(c.region) }) },
+    continent: { kind: "region", scope: "subregion", label: t("hint.continent", { region: tRegion(continentOf(c)), regionIn: regionIn(continentOf(c)) }) },
+    first: { kind: "first", label: t("hint.first", { letter: firstLetter(q) }) },
+    length: { kind: "length", label: t("hint.pattern", { pattern: lengthPattern(q) }) },
+    reveal: { kind: "length", label: t("hint.letters", { pattern: revealPattern(q) }) },
+    position: { kind: "position", label: t("hint.position") },
   };
 
   // Ordered weakest to strongest. Broad location always precedes exact location,

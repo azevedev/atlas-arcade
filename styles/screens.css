@@ -43,6 +43,8 @@
   margin: 16px 0 0;
 }
 .menu-meta .chip { text-align: center; padding: 10px 6px; }
+/* odd one out spans the row, so the grid never shows an empty cell */
+#lang-toggle { grid-column: 1 / -1; }
 
 .howto { margin-top: 16px; text-align: left; border-top: 2px dashed var(--ink-soft); padding: 4px 2px 0; }
 .howto summary {

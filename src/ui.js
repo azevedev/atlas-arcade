@@ -5,6 +5,7 @@ import { Autocomplete } from "./input.js";
 import { drawSilhouette } from "./silhouette.js";
 import { featureFor, countryAtPoint, regionArea } from "./data.js";
 import { formatTime } from "./scoring.js";
+import { t, countryName, capitalName } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -197,14 +198,14 @@ export function createUI() {
   function flagNode(country) {
     const img = document.createElement("img");
     setFlagSrc(img, country.cca2);
-    img.alt = `Flag of the country to guess`;
+    img.alt = t("clue.flagAlt");
     return img;
   }
   function shapeNode(country) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     drawSilhouette(svg, country, { size: 420 });
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Outline of the country to guess");
+    svg.setAttribute("aria-label", t("clue.shapeAlt"));
     return svg;
   }
 
@@ -219,8 +220,8 @@ export function createUI() {
   // the main clue card opens itself full size, in whichever state it is in
   els.clueMedia.addEventListener("click", () => {
     if (!currentCountry) return;
-    if (!els.flag.hidden) openLightbox("Flag", () => flagNode(currentCountry));
-    else openLightbox("Shape", () => shapeNode(currentCountry));
+    if (!els.flag.hidden) openLightbox(t("clue.flag"), () => flagNode(currentCountry));
+    else openLightbox(t("clue.shape"), () => shapeNode(currentCountry));
   });
 
   const view = {
@@ -302,8 +303,8 @@ export function createUI() {
         img.alt = "";
         chip.appendChild(img);
         chip.append(" Flag");
-        chip.setAttribute("aria-label", "Flag hint, enlarge");
-        chip.addEventListener("click", () => openLightbox("Flag", () => flagNode(c)));
+        chip.setAttribute("aria-label", t("clue.flagHint"));
+        chip.addEventListener("click", () => openLightbox(t("clue.flag"), () => flagNode(c)));
       } else if (hint.kind === "shape") {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("class", "hint-shape");
@@ -311,8 +312,8 @@ export function createUI() {
         drawSilhouette(svg, c, { size: 80 });
         chip.appendChild(svg);
         chip.append(" Shape");
-        chip.setAttribute("aria-label", "Shape hint, enlarge");
-        chip.addEventListener("click", () => openLightbox("Shape", () => shapeNode(c)));
+        chip.setAttribute("aria-label", t("clue.shapeHint"));
+        chip.addEventListener("click", () => openLightbox(t("clue.shape"), () => shapeNode(c)));
       } else {
         if (hint.kind === "length") chip.classList.add("mono");
         chip.textContent = hint.label;
@@ -345,7 +346,7 @@ export function createUI() {
         globe.setIdle(false);
       } else {
         ac.setKind(q.answerKind);
-        ac.enable(q.answerKind === "capital" ? "Name the capital…" : "Name the country…");
+        ac.enable(t(q.answerKind === "capital" ? "game.placeholderCapital" : "game.placeholderCountry"));
         globe.disablePick();
         // Only steal focus where a keyboard is already on screen. On touch,
         // autofocus throws the on-screen keyboard up on every single question,
@@ -378,7 +379,7 @@ export function createUI() {
         els.pointsChip.hidden = true;
       } else {
         els.pointsChip.hidden = false;
-        els.pointsChip.textContent = pts.toLocaleString() + " pts";
+        els.pointsChip.textContent = pts.toLocaleString() + " " + t("game.points");
       }
     },
     setGuesses(list, normSet) {
@@ -458,39 +459,42 @@ export function createUI() {
             markers.push({ point: res.guess, color: tapPin });
           }
           globe.setMarkers(markers);
-          placeLabel(c.ll, `${c.name} · ${c.capital}`, res.correct);
+          placeLabel(c.ll, `${countryName(c)} · ${capitalName(c)}`, res.correct);
         });
 
-        const answer = q.answerKind === "capital" ? c.capital : c.name;
+        const answer = q.answerKind === "capital" ? capitalName(c) : countryName(c);
         els.reveal.className = "reveal " + (res.correct ? "ok" : "bad");
         els.revealMark.textContent = res.correct ? "✓" : "✕";
         if (q.type === "locate") {
           els.revealText.innerHTML = res.correct
-            ? `<b>${c.name}</b>`
-            : `<b>${c.name}</b>. You tapped <b>${tapped ? tapped.name : "open ocean"}</b>`;
+            ? `<b>${countryName(c)}</b>`
+            : t("reveal.tapped", {
+                country: countryName(c),
+                tapped: tapped ? countryName(tapped) : t("reveal.ocean"),
+              });
         } else if (res.correct) {
           els.revealText.innerHTML = `<b>${answer}</b>`;
         } else {
           // on a miss, spell out what it was (with its country for capitals)
           els.revealText.innerHTML =
             q.answerKind === "capital"
-              ? `It was <b>${answer}</b>, ${c.name}`
-              : `It was <b>${answer}</b>`;
+              ? t("reveal.wasCapital", { answer, country: countryName(c) })
+              : t("reveal.was", { answer });
         }
 
         const ptsEl = els.revealPoints;
-        const t = res.timeMs != null ? formatTime(res.timeMs) : "";
+        const tm = res.timeMs != null ? formatTime(res.timeMs) : "";
         // at most one middle dot per line: distance keeps the separator, time reads "in 4.2s"
         if (res.points > 0) {
           const dist = q.type === "locate" && res.distanceKm != null
-            ? `${Math.round(res.distanceKm).toLocaleString()} km · ` : "";
-          ptsEl.textContent = `${dist}+${res.points.toLocaleString()}${res.multiplier > 1 ? " (x" + res.multiplier + ")" : ""}${t ? " in " + t : ""}`;
+            ? `${t("reveal.away", { km: Math.round(res.distanceKm).toLocaleString() })} · ` : "";
+          ptsEl.textContent = `${dist}+${res.points.toLocaleString()}${res.multiplier > 1 ? " (x" + res.multiplier + ")" : ""}${tm ? " " + t("reveal.in", { time: tm }) : ""}`;
           ptsEl.className = "reveal-points plus";
         } else {
           const dist = q.type === "locate" && res.distanceKm != null
-            ? `${Math.round(res.distanceKm).toLocaleString()} km away` : "";
-          const lead = dist || (res.skipped ? "skipped" : "");
-          ptsEl.textContent = lead && t ? `${lead} in ${t}` : lead || t || "";
+            ? t("reveal.away", { km: Math.round(res.distanceKm).toLocaleString() }) : "";
+          const lead = dist || (res.skipped ? t("reveal.skipped") : "");
+          ptsEl.textContent = lead && tm ? `${lead} ${t("reveal.in", { time: tm })}` : lead || tm || "";
           ptsEl.className = "reveal-points";
         }
 

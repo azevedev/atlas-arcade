@@ -14,7 +14,8 @@ export function haversineKm(a, b) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-// A country's continent, for hint text.
+// A country's continent as the ENGLISH dataset string. i18n.tRegion() keys its
+// dictionary on this, so it must not be translated here.
 export function continentOf(country) {
   return country.subregion || country.region || "the world";
 }

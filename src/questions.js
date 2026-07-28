@@ -3,6 +3,7 @@
 // Arcade can be filtered to a single category (flags-only, shapes-only, …).
 import { tierPool, countries } from "./data.js";
 import { pick, weightedPick, shuffle } from "./rng.js";
+import { t, countryOf, countryArt } from "./i18n.js";
 
 let uid = 0;
 
@@ -13,13 +14,17 @@ const TYPE_WEIGHTS = [
 ];
 
 // arcade categories -> how to build each question
+// Labels are resolved at call time, not module load, so switching language
+// rebuilds them without a reload.
 export const CATEGORIES = {
-  mixed: { label: "Mixed", emoji: "🌐", blurb: "flags, shapes, capitals & locate" },
-  flag: { label: "Flags", emoji: "🏳️", blurb: "name the country from its flag" },
-  shape: { label: "Shapes", emoji: "🗺️", blurb: "name the country from its outline" },
-  capital: { label: "Capitals", emoji: "🏛️", blurb: "name the capital city" },
-  locate: { label: "Locate", emoji: "📍", blurb: "tap where it is on the globe" },
+  mixed: { key: "mixed", emoji: "🌐" },
+  flag: { key: "flag", emoji: "🏳️" },
+  shape: { key: "shape", emoji: "🗺️" },
+  capital: { key: "capital", emoji: "🏛️" },
+  locate: { key: "locate", emoji: "📍" },
 };
+export const categoryLabel = (k) => t(`cat.${k}`);
+export const categoryBlurb = (k) => t(`cat.${k}Blurb`);
 
 function pickCountry(rng, { tierWeights, exclude, filter } = {}) {
   const pool = (tier) => {
@@ -57,13 +62,13 @@ function buildQuestion(type, country, rng, forceClue = null) {
       mode = weightedPick(modes, rng);
     }
     q.clueMode = mode;
-    q.prompt = "Name this country";
+    q.prompt = t("game.promptCountry");
     q.answerKind = "country";
   } else if (type === "capital") {
-    q.prompt = `What is the capital of ${country.name}?`;
+    q.prompt = t("game.promptCapital", { country: country.name, countryOf: countryOf(country) });
     q.answerKind = "capital";
   } else {
-    q.prompt = `Where is ${country.name}?`;
+    q.prompt = t("game.promptLocate", { country: country.name, countryArt: countryArt(country) });
     q.answerKind = "locate";
   }
   return q;

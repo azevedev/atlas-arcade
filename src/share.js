@@ -1,5 +1,6 @@
 // Builds the shareable emoji grid for a Daily result.
 import { starsFor } from "./scoring.js";
+import { t } from "./i18n.js";
 
 const chunk = (a, n) => {
   const out = [];
@@ -16,7 +17,7 @@ export function buildShareText(results, dateKey, score) {
   const grid = chunk(cells, 5)
     .map((row) => row.join(""))
     .join("\n");
-  return `Atlas Arcade Daily ${dateKey}\n★ ${score.toLocaleString()} pts\n${grid}`;
+  return `Atlas Arcade ${t("menu.daily")} ${dateKey}\n★ ${score.toLocaleString()} ${t("game.points")}\n${grid}`;
 }
 
 export async function copyShare(text) {

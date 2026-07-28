@@ -15,6 +15,10 @@ too small to tap, and tap any flag or shape to see it full size.
 ![No build step](https://img.shields.io/badge/build-none-59cbb0)
 ![Plays offline](https://img.shields.io/badge/offline-PWA-5fb6ef)
 
+Available in **English and Brazilian Portuguese**, picked from your browser and
+switchable from the menu. Country names, capitals and regions are translated too,
+and answers are accepted in either language.
+
 ## Modes
 - **Arcade** — 3 lives, endless, difficulty ramps up, local high score.
 - **Daily Challenge** — a fixed set of 10, the same for everyone that day (UTC), with a
