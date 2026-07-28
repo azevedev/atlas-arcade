@@ -24,7 +24,10 @@ and answers are accepted in either language.
   questions; Normal and Hard give 3 lives and run endlessly, and Hard drops the
   hints. Local high score per difficulty.
 - **Daily Challenge** — a fixed set of 10, the same for everyone that day (UTC), with a
-  shareable emoji grid and a day streak.
+  shareable emoji grid and a day streak. Always drawn from the easy tier, so it
+  stays winnable.
+- **World Cup** — the same categories, restricted to the 74 nations that have played
+  in a FIFA World Cup final tournament. 3 lives, no difficulty choice.
 
 Works on mobile, installs as a PWA ("Add to Home Screen"), and plays offline once loaded.
 No accounts, no tracking — scores live in your browser's `localStorage`.

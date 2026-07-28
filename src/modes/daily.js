@@ -11,7 +11,7 @@ export function startDaily(view, onEnd) {
   const queue = dailyQueue(rng, DAILY_N);
   const engine = new Engine(view, {
     mode: "daily",
-    lives: Infinity,
+    lives: null, // no lives: everyone answers all 10, so the shared grid compares
     total: DAILY_N,
     queue,
     onEnd,

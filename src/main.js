@@ -3,6 +3,7 @@ import { loadData } from "./data.js";
 import { createUI } from "./ui.js";
 import { startArcade, arcadeBest, recordArcade, EASY_LENGTH } from "./modes/arcade.js";
 import { CATEGORIES, categoryLabel, categoryBlurb } from "./questions.js";
+import { startWorldCup, worldCupBest, recordWorldCup } from "./modes/worldcup.js";
 import {
   startDaily,
   recordDaily,
@@ -68,7 +69,7 @@ async function boot() {
       b.innerHTML =
         `<span class="btn-emoji">${c.emoji}</span>` +
         `<span class="btn-labels"><b>${categoryLabel(key)}</b><small>${categoryBlurb(key)}</small></span>`;
-      b.onclick = () => begin("arcade", key);
+        b.onclick = () => begin(currentMode === "worldcup" ? "worldcup" : "arcade", key);
       catWrap.appendChild(b);
     }
   }
@@ -111,7 +112,9 @@ async function boot() {
     currentCategory = category;
     ui.showScreen("game");
     engine =
-      mode === "arcade"
+      mode === "worldcup"
+        ? startWorldCup(ui.view, onEnd, category)
+        : mode === "arcade"
         ? startArcade(ui.view, onEnd, category, currentDifficulty)
         : startDaily(ui.view, onEnd);
   }
@@ -128,8 +131,10 @@ async function boot() {
 
     let stats = `<span>✓ <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
     if (!isDaily) {
-      const best = recordArcade(summary.score, summary.difficulty);
-      stats += `<span>🏆 <b>${arcadeBest(summary.difficulty).toLocaleString()}</b> ${t("results.best")}</span>`;
+      const wc = summary.mode === "worldcup";
+      const best = wc ? recordWorldCup(summary.score) : recordArcade(summary.score, summary.difficulty);
+      const top = wc ? worldCupBest() : arcadeBest(summary.difficulty);
+      stats += `<span>🏆 <b>${top.toLocaleString()}</b> ${t("results.best")}</span>`;
       if (best) stats += `<span>🎉 <b>${t("results.record")}</b></span>`;
     }
 
@@ -161,7 +166,20 @@ async function boot() {
   }
 
   // ---- menu wiring ----
-  $("play-arcade").onclick = () => ui.showScreen("arcade");
+  // Both arcade and world cup use the category picker; only arcade offers a
+  // difficulty, so the row is hidden for the themed mode.
+  function openPicker(mode) {
+    currentMode = mode;
+    const isArcade = mode === "arcade";
+    document.querySelector(".diff-row").hidden = !isArcade;
+    $("diff-note").hidden = !isArcade;
+    $("picker-title").textContent = t(isArcade ? "picker.title" : "picker.worldcup");
+    $("picker-note").textContent = isArcade ? "" : t("picker.worldcupSub");
+    $("picker-note").hidden = isArcade;
+    ui.showScreen("arcade");
+  }
+  $("play-arcade").onclick = () => openPicker("arcade");
+  $("play-worldcup").onclick = () => openPicker("worldcup");
   $("arcade-back").onclick = () => ui.showScreen("menu");
   $("play-daily").onclick = () => begin("daily");
   $("again-btn").onclick = () => begin(currentMode, currentCategory);
@@ -171,7 +189,7 @@ async function boot() {
   };
   $("hud-back").onclick = () => {
     if (engine) engine.stop();
-    ui.showScreen(currentMode === "arcade" ? "arcade" : "menu");
+    ui.showScreen(currentMode === "arcade" || currentMode === "worldcup" ? "arcade" : "menu");
     refreshMenu();
   };
   $("mute-toggle").onclick = () => {

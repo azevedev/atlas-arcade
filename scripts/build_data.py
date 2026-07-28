@@ -157,6 +157,99 @@ def pt_article(cca3, name):
         return "a"
     return "a" if name.endswith("a") else "o"
 
+# ---- World Cup pool --------------------------------------------------------
+# Countries that have played in a FIFA World Cup FINAL tournament.
+#
+# Derived from Wikidata (editions of Q19317 carrying an edition number, joined
+# through each team's "country for sport"), but only for 1930-2010, because the
+# recent editions are unreliable there: 2014 lists 51 teams, 2018 lists 86 and
+# 2022 lists 4, since qualifying sides leak into the finals statements. Field
+# sizes for 1930-2010 all check out (13-32), so that range is trusted and the
+# four later debutants are named explicitly.
+#
+# Teams that no longer map to a current UN member are dropped by the join:
+# Czechoslovakia, Soviet Union, East Germany, Yugoslavia, Serbia and Montenegro.
+# GBR is added by hand: the United Kingdom never competes as such, but England,
+# Scotland, Wales and Northern Ireland do, and a World Cup pool without it would
+# be a conspicuous hole.
+WORLD_CUP = {
+    "AGO",
+    "ARE",
+    "ARG",
+    "AUS",
+    "AUT",
+    "BEL",
+    "BGR",
+    "BIH",
+    "BOL",
+    "BRA",
+    "CAN",
+    "CHE",
+    "CHL",
+    "CHN",
+    "CIV",
+    "CMR",
+    "COD",
+    "COL",
+    "CRI",
+    "CUB",
+    "CZE",
+    "DEU",
+    "DNK",
+    "DZA",
+    "ECU",
+    "EGY",
+    "ESP",
+    "FRA",
+    "GBR",
+    "GHA",
+    "GRC",
+    "HND",
+    "HRV",
+    "HTI",
+    "HUN",
+    "IRL",
+    "IRN",
+    "IRQ",
+    "ISL",
+    "ISR",
+    "ITA",
+    "JAM",
+    "JPN",
+    "KOR",
+    "KWT",
+    "MAR",
+    "MEX",
+    "NGA",
+    "NOR",
+    "NZL",
+    "PAN",
+    "PER",
+    "POL",
+    "PRK",
+    "PRT",
+    "PRY",
+    "QAT",
+    "ROU",
+    "RUS",
+    "SAU",
+    "SEN",
+    "SLV",
+    "SRB",
+    "SVK",
+    "SVN",
+    "SWE",
+    "TGO",
+    "TTO",
+    "TUN",
+    "TUR",
+    "UKR",
+    "URY",
+    "USA",
+    "ZAF"
+}
+WORLD_CUP_LATE_DEBUT = {"BIH": 2014, "ISL": 2018, "PAN": 2018, "QAT": 2022}
+
 # ---- manual patches -------------------------------------------------------
 # capitals the Natural Earth 110m layer omits (lng, lat)
 CAPITAL_PATCH = {
@@ -281,6 +374,7 @@ def main():
             # only sizeable countries make a fair "name the shape" clue (micro-states
             # render as uninformative blobs); they still appear as flag/capital/locate.
             "shapeClue": has_shape and area >= 1000,
+            "worldCup": cca3 in WORLD_CUP,
             "aliases": sorted(aliases),
         })
 
@@ -336,6 +430,8 @@ def main():
     nopop = [c["cca3"] for c in out if not c["pop"]]
     print(f"no shape (flag/capital/locate only): {noshape}")
     print(f"no population: {nopop}")
+    wc = [c for c in out if c["worldCup"]]
+    print(f"World Cup pool: {len(wc)} countries")
     pt_same = [c["cca3"] for c in out if c["capitalPt"] == c["capital"]]
     print(f"pt-BR capitals translated: {len(out) - len(pt_same)}/{len(out)} "
           f"({len(pt_same)} identical to English, which is usually correct)")

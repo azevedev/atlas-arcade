@@ -126,7 +126,15 @@ function tierWeightsFor(difficulty, index) {
   };
 }
 
-export function arcadeGenerator(rng, category = "mixed", difficulty = "normal") {
+// World Cup: the same endless stream, restricted to countries that have played
+// in a World Cup final tournament. No difficulty choice, so the tier ramp is
+// the normal one; the restricted pool is the theme, not the challenge.
+export function worldCupGenerator(rng, category = "mixed") {
+  const inner = arcadeGenerator(rng, category, "normal", (c) => c.worldCup);
+  return inner;
+}
+
+export function arcadeGenerator(rng, category = "mixed", difficulty = "normal", poolFilter = null) {
   // Every country seen this run, not a sliding window: a country asked once
   // does not come back until the player starts a new match. Shared across
   // question types, so being shown France's flag also retires France as a
@@ -135,13 +143,17 @@ export function arcadeGenerator(rng, category = "mixed", difficulty = "normal") 
   return function next(index) {
     const tierWeights = tierWeightsFor(difficulty, index);
     const spec = categorySpec(category, rng);
-    let country = pickCountry(rng, { tierWeights, exclude: used, filter: spec.filter, mode: spec.mode });
+    // the category filter and the pool filter both have to pass
+    const filter = poolFilter
+      ? (c) => poolFilter(c) && (!spec.filter || spec.filter(c))
+      : spec.filter;
+    let country = pickCountry(rng, { tierWeights, exclude: used, filter, mode: spec.mode });
     if (!country) {
       // Arcade is endless, so a long enough run can exhaust the pool. Nobody is
       // getting through 194 questions on three lives, but the run must keep
       // going rather than break, so start a fresh cycle.
       used.clear();
-      country = pickCountry(rng, { tierWeights, filter: spec.filter, mode: spec.mode });
+      country = pickCountry(rng, { tierWeights, filter, mode: spec.mode });
     }
     used.add(country.ccn3);
     return buildQuestion(spec.type, country, rng, spec.forceClue);
@@ -149,12 +161,10 @@ export function arcadeGenerator(rng, category = "mixed", difficulty = "normal") 
 }
 
 // Daily: a fixed, seeded set — same for everyone that day (always mixed).
+// The Daily is always the easy tier: it is the one set everybody plays and
+// compares, so it should be winnable rather than a test of obscure flags.
 export function dailyQueue(rng, n = 10) {
-  const plan = [
-    ...Array(4).fill("easy"),
-    ...Array(4).fill("medium"),
-    ...Array(2).fill("hard"),
-  ].slice(0, n);
+  const plan = Array(n).fill("easy");
   const used = new Set();
   const items = plan.map((tier) => {
     const weights = { easy: 0, medium: 0, hard: 0 };

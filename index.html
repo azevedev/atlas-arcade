@@ -71,6 +71,10 @@
                 <span class="btn-emoji">📅</span>
                 <span class="btn-labels"><b data-i18n="menu.daily">Daily Challenge</b><small id="daily-sub">10 puzzles · new every day</small></span>
               </button>
+              <button class="btn btn-secondary" id="play-worldcup">
+                <span class="btn-emoji">⚽</span>
+                <span class="btn-labels"><b data-i18n="menu.worldcup">World Cup</b><small data-i18n="menu.worldcupSub">only nations that have played a World Cup</small></span>
+              </button>
             </div>
 
             <div class="menu-meta">
@@ -100,7 +104,8 @@
         <div class="menu-card">
           <button class="back-link" id="arcade-back" data-i18n="picker.back">‹ Back</button>
           <div class="logo small">🕹️</div>
-          <h2 class="cats-title" data-i18n="picker.title">Pick a mode</h2>
+          <h2 class="cats-title" id="picker-title">Pick a mode</h2>
+          <p class="diff-note" id="picker-note" hidden></p>
           <div class="diff-row" role="group" data-i18n-aria="diff.group" aria-label="Difficulty">
             <button type="button" class="diff-btn" data-diff="easy"   data-i18n="diff.easy">Easy</button>
             <button type="button" class="diff-btn" data-diff="normal" data-i18n="diff.normal">Normal</button>
