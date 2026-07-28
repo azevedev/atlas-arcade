@@ -26,27 +26,36 @@ export const CATEGORIES = {
 export const categoryLabel = (k) => t(`cat.${k}`);
 export const categoryBlurb = (k) => t(`cat.${k}Blurb`);
 
+// Picks a country honouring the tier weights, the category filter, and the set
+// of countries already used this run.
+//
+// The exclusion is applied by filtering the pool rather than by retrying random
+// draws. Retrying was only best-effort: as the used set grew the odds of landing
+// on a fresh country fell, and after a fixed number of attempts it gave up and
+// returned a random country, which is exactly when a repeat was most likely.
+//
+// Returns null when nothing is left, so the caller can decide what that means.
 function pickCountry(rng, { tierWeights, exclude, filter } = {}) {
-  const pool = (tier) => {
-    const p = tierPool(tier);
-    return filter ? p.filter(filter) : p;
+  const usable = (arr) => {
+    const a = filter ? arr.filter(filter) : arr;
+    return exclude && exclude.size ? a.filter((c) => !exclude.has(c.ccn3)) : a;
   };
-  const pools = { easy: pool("easy"), medium: pool("medium"), hard: pool("hard") };
-  const all = filter ? countries().filter(filter) : countries();
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const tier = weightedPick(
-      [
-        { value: "easy", weight: tierWeights.easy },
-        { value: "medium", weight: tierWeights.medium },
-        { value: "hard", weight: tierWeights.hard },
-      ],
-      rng
-    );
-    const p = pools[tier].length ? pools[tier] : all;
-    const c = pick(p, rng);
-    if (!exclude || !exclude.has(c.ccn3)) return c;
-  }
-  return pick(all, rng);
+  const all = usable(countries());
+  if (!all.length) return null;
+
+  const pools = {
+    easy: usable(tierPool("easy")),
+    medium: usable(tierPool("medium")),
+    hard: usable(tierPool("hard")),
+  };
+  // only weight tiers that still have someone left in them
+  const weights = ["easy", "medium", "hard"]
+    .filter((t) => pools[t].length)
+    .map((t) => ({ value: t, weight: tierWeights[t] }));
+  if (!weights.length) return pick(all, rng);
+
+  const tier = weightedPick(weights, rng);
+  return pick(pools[tier], rng);
 }
 
 function buildQuestion(type, country, rng, forceClue = null) {
@@ -92,11 +101,11 @@ function categorySpec(category, rng) {
 
 // Endless arcade: difficulty ramps as the run goes on. `category` restricts the type.
 export function arcadeGenerator(rng, category = "mixed") {
-  const recent = [];
-  const remember = (c) => {
-    recent.push(c.ccn3);
-    if (recent.length > 12) recent.shift();
-  };
+  // Every country seen this run, not a sliding window: a country asked once
+  // does not come back until the player starts a new match. Shared across
+  // question types, so being shown France's flag also retires France as a
+  // capital or locate question for the rest of the run.
+  const used = new Set();
   return function next(index) {
     const tierWeights = {
       easy: Math.max(0.5, 6 - index * 0.25),
@@ -104,12 +113,15 @@ export function arcadeGenerator(rng, category = "mixed") {
       hard: Math.max(0.3, index * 0.22 - 0.8),
     };
     const spec = categorySpec(category, rng);
-    const country = pickCountry(rng, {
-      tierWeights,
-      exclude: new Set(recent),
-      filter: spec.filter,
-    });
-    remember(country);
+    let country = pickCountry(rng, { tierWeights, exclude: used, filter: spec.filter });
+    if (!country) {
+      // Arcade is endless, so a long enough run can exhaust the pool. Nobody is
+      // getting through 194 questions on three lives, but the run must keep
+      // going rather than break, so start a fresh cycle.
+      used.clear();
+      country = pickCountry(rng, { tierWeights, filter: spec.filter });
+    }
+    used.add(country.ccn3);
     return buildQuestion(spec.type, country, rng, spec.forceClue);
   };
 }
