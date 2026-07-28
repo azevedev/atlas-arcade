@@ -48,6 +48,7 @@ export function createUI() {
     stopwatch: $("stopwatch"),
     pointsChip: $("points-chip"),
     guesses: $("guesses"),
+    answerRow: $("answer-row"),
     globeLabel: $("globe-label"),
     locateBadge: $("locate-badge"),
     reveal: $("reveal"),
@@ -339,6 +340,15 @@ export function createUI() {
 
     enableAnswer(q) {
       els.btnSkip.disabled = false;
+      // The answer field has no role in a locate: the answer is a tap on the
+      // globe. Hiding it also hands its height back to the stage, so the globe
+      // gets bigger exactly when the player needs to aim.
+      const typing = q.type !== "locate";
+      if (els.answerRow.hidden === typing) {
+        els.answerRow.hidden = !typing;
+        // the stage just changed height, and the canvas is sized from it
+        requestAnimationFrame(() => globe.resize());
+      }
       if (q.type === "locate") {
         ac.disable();
         els.locateBadge.hidden = false;
@@ -432,10 +442,8 @@ export function createUI() {
         globe.resetZoom(); // frame the whole answer, not whatever the player zoomed into
         if (q.type === "locate") globe.clearBlob(); // drop any leftover hint area
         // which country did the player actually tap? (null = open ocean)
-        const tapped =
-          q.type === "locate" && res.guess && !res.correct
-            ? countryAtPoint(res.guess)
-            : null;
+        // resolved by the engine when it graded the tap; no second scan here
+        const tapped = q.type === "locate" && res.guess && !res.correct ? res.tapped : null;
         // on a miss, frame the midpoint so BOTH the answer and the tap are visible
         const focus =
           q.type === "locate" && res.guess && !res.correct

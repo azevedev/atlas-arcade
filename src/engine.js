@@ -1,6 +1,7 @@
 // Game engine: runs a sequence of questions, tracks score/lives/combo, applies
 // hints, grades answers, and asks the `view` to present clues + reveals.
 import { accepts, norm } from "./match.js";
+import { countryAtPoint } from "./data.js";
 import { hintPlan } from "./hints.js";
 import {
   namePoints,
@@ -121,13 +122,28 @@ export class Engine {
   _answerLocate(point) {
     if (this.done || this.q.type !== "locate") return;
     const km = distanceKm(point, this.q.country.ll);
-    const pts = locatePoints(km, this.hintsUsed);
-    const good = pts >= LOCATE_GOOD;
+
+    // Tapping inside the country IS finding it. Grading on distance to the
+    // centroid alone marked 24 of the 194 countries wrong for a tap well inside
+    // their own borders: Indonesia reaches 2783km from its centroid, Canada
+    // 2759km, Brazil 2470km, all against a ~1040km pass mark. Spending hints
+    // tightened that radius further, so the bigger the country the more likely
+    // the game was to reject a correct answer.
+    const tapped = countryAtPoint(point);
+    const onTarget = !!tapped && tapped.ccn3 === this.q.country.ccn3;
+
+    const raw = locatePoints(km, this.hintsUsed);
+    // a hit still scores by how central it was, but never drops below a pass
+    const pts = onTarget ? Math.max(raw, LOCATE_GOOD) : raw;
+    const good = onTarget || pts >= LOCATE_GOOD;
+
     // A locate resolves in one tap, so _grade never hears about the failure the
     // way a typed guess does. Without this, missing the globe by half a world
     // was the only wrong answer in the game that made no sound at all.
     if (!good) sfx.wrong();
-    this._grade(good, pts, { distanceKm: km, guess: point, locate: true });
+    // `tapped` is passed on so the reveal does not repeat this point-in-polygon
+    // scan over every country
+    this._grade(good, pts, { distanceKm: km, guess: point, locate: true, tapped });
   }
 
   _skip() {
@@ -173,6 +189,7 @@ export class Engine {
       timeMs: solveMs,
       distanceKm: extra.distanceKm ?? null,
       guess: extra.guess ?? null,
+      tapped: extra.tapped ?? null,
       skipped: !!extra.skipped,
     });
     if (this.done) return;
