@@ -82,6 +82,7 @@
               <span id="streak-chip" class="chip">🔥 Streak: 0</span>
               <button id="mute-toggle" class="chip chip-btn">🔊 Sound</button>
               <button id="theme-toggle" class="chip chip-btn">🌙 Theme</button>
+              <button id="stats-toggle" class="chip chip-btn">📊 Stats</button>
               <button id="lang-toggle" class="chip chip-btn">🌐 Português</button>
             </div>
 
@@ -208,6 +209,20 @@
           </div>
         </div>
       </section>
+
+      <!-- Wordle-style personal stats: nothing leaves the device -->
+      <div id="stats-modal" class="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="stats-title">
+        <div class="lightbox-panel">
+          <div class="lightbox-head">
+            <h2 class="lightbox-title" id="stats-title" data-i18n="stats.title">Statistics</h2>
+            <button type="button" class="lightbox-close" id="stats-close" data-i18n-aria="stats.close" aria-label="Close">✕</button>
+          </div>
+          <div class="stats-tiles" id="stats-tiles"></div>
+          <h3 class="stats-sub" id="stats-dist-title" data-i18n="stats.distribution">Correct answers</h3>
+          <div class="stats-dist" id="stats-dist"></div>
+          <p class="stats-note" id="stats-note" data-i18n="stats.local">Kept on this device only.</p>
+        </div>
+      </div>
 
       <!-- full-size view of a flag / shape clue; closing returns to the question -->
       <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lightbox-title">

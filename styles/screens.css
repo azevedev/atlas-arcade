@@ -359,3 +359,46 @@
   justify-self: center;
   line-height: 1;
 }
+
+/* ================= STATISTICS ================= */
+.stats-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stat-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--sheen-quiet); border: 2px solid var(--line);
+  border-radius: var(--radius); padding: 10px 4px;
+}
+.stat-tile b { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; line-height: 1; color: var(--ink); }
+.stat-tile span {
+  font-size: 0.52rem; letter-spacing: 0.06em; text-transform: uppercase;
+  font-weight: 800; color: var(--ink-soft); text-align: center; line-height: 1.2;
+}
+.stats-sub {
+  font-family: "Archivo Black", sans-serif; text-transform: uppercase;
+  font-size: 0.72rem; letter-spacing: 0.06em; margin: 4px 0 0; color: var(--ink);
+}
+
+/* One series, so one hue and no legend: the heading names it. Bars start at
+   zero and are labelled directly, which doubles as the axis. */
+.stats-dist { display: flex; flex-direction: column; gap: 3px; }
+.dist-row { display: grid; grid-template-columns: 1.1rem 1fr 1.4rem; align-items: center; gap: 8px; }
+.dist-key, .dist-val {
+  font-family: ui-monospace, monospace; font-size: 0.7rem; font-weight: 700;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.dist-val { text-align: right; }
+.dist-track { height: 14px; background: var(--chart-track); border-radius: 4px; }
+/* Ink tint rather than a palette hue, so the bars stay a neutral single series
+   and invert correctly with the theme. */
+.dist-bar {
+  display: block; height: 100%; background: var(--chart-bar);
+  border-radius: 4px; min-width: 0;
+}
+/* The run just finished. The first attempt used --ok against a custard bar and
+   measured 1.34:1: different hue, near-identical luminance, which is precisely
+   the pair a colourblind or greyscale reader cannot separate. The deeper green
+   is well clear of the neutral in lightness, and the row is bolded too, so the
+   highlight never rests on colour alone. */
+.dist-row.on .dist-bar { background: var(--chart-bar-on); }
+.dist-row.on .dist-key,
+.dist-row.on .dist-val { color: var(--ok-text); font-weight: 800; }
+.stats-note { margin: 2px 0 0; font-size: 0.68rem; color: var(--ink-soft); line-height: 1.35; }

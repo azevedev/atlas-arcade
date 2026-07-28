@@ -10,6 +10,8 @@ import {
   dailyStreak,
   dailyKey,
   dailyPlayed,
+  dailyStats,
+  DAILY_N,
 } from "./modes/daily.js";
 import { buildShare, copyShare } from "./share.js";
 import { toggleMute, isMuted } from "./audio.js";
@@ -104,6 +106,7 @@ async function boot() {
       document.documentElement.dataset.theme === "dark" ? `☀️ ${t("menu.light")}` : `🌙 ${t("menu.dark")}`;
     const lang = $("lang-toggle");
     lang.textContent = "🌐 " + t("menu.language");
+    $("stats-toggle").textContent = "📊 " + t("menu.stats");
     lang.setAttribute("aria-label", t("menu.languageAria"));
   }
 
@@ -167,7 +170,53 @@ async function boot() {
 
     $("results-stats").innerHTML = stats;
     ui.showScreen("results");
+    // Wordle shows the stats the moment the puzzle ends; that is the loop.
+    if (isDaily) setTimeout(() => openStats(correct), 650);
   }
+
+  // ---- statistics ----
+  // One series (how often each score happened), so: one hue, no legend, bars
+  // anchored at zero. The only second colour marks the run you just finished,
+  // and that row is also bolded so the highlight is never colour alone.
+  const statsModal = $("stats-modal");
+  function renderStats(highlight = null) {
+    const st = dailyStats(DAILY_N);
+    $("stats-tiles").innerHTML = [
+      [st.played, t("stats.played")],
+      [st.withDistribution ? st.perfectPct + "%" : "-", t("stats.perfect")],
+      [st.streak, t("stats.streak")],
+      [st.maxStreak, t("stats.maxStreak")],
+    ].map(([v, k]) => `<div class="stat-tile"><b>${v}</b><span>${k}</span></div>`).join("");
+
+    const dist = $("stats-dist");
+    if (!st.withDistribution) {
+      dist.innerHTML = `<p class="stats-note">${t("stats.empty")}</p>`;
+      return;
+    }
+    const peak = Math.max(...st.dist, 1);
+    dist.innerHTML = st.dist.map((n, i) => {
+      const on = highlight === i;
+      // zero-count rows keep a sliver so the row still reads as a row
+      const pct = n ? Math.max(8, Math.round((n / peak) * 100)) : 0;
+      return `<div class="dist-row${on ? " on" : ""}">
+        <span class="dist-key">${i}</span>
+        <span class="dist-track"><span class="dist-bar" style="width:${pct}%"></span></span>
+        <span class="dist-val">${n}</span>
+      </div>`;
+    }).join("");
+    dist.setAttribute("aria-label", `${t("stats.distribution")}: ` +
+      st.dist.map((n, i) => `${i}: ${n}`).join(", "));
+  }
+  function openStats(highlight = null) {
+    renderStats(highlight);
+    statsModal.hidden = false;
+    $("stats-close").focus();
+  }
+  const closeStats = () => { statsModal.hidden = true; };
+  $("stats-toggle").onclick = () => openStats();
+  $("stats-close").onclick = closeStats;
+  statsModal.addEventListener("click", (e) => { if (e.target === statsModal) closeStats(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeStats(); });
 
   // ---- menu wiring ----
   // Both arcade and world cup use the category picker; only arcade offers a

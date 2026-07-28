@@ -25,7 +25,8 @@ and answers are accepted in either language.
   hints. Local high score per difficulty.
 - **Daily Challenge** — a fixed set of 10, the same for everyone that day (UTC), with a
   shareable emoji grid and a day streak. Always drawn from the easy tier, so it
-  stays winnable.
+  stays winnable. Personal stats (played, perfect runs, streaks and a
+  correct-answer distribution) live on your device; nothing is uploaded.
 - **World Cup** — the same categories, restricted to the 74 nations that have played
   in a FIFA World Cup final tournament. 3 lives, no difficulty choice.
 

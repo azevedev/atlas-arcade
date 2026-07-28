@@ -129,6 +129,13 @@
   /* the answer, once you have got it right */
   --globe-correct: #8fae62;
 
+  /* Stats chart. One series, so one neutral; the second colour marks only the
+     run just finished. Set explicitly per theme rather than mixed from --ink:
+     an alpha tint that reads well on cream is nearly invisible on umber. */
+  --chart-track: #e5e0c4;
+  --chart-bar: #bdb79b;
+  --chart-bar-on: #4a6330;
+
   --radius: 14px;
   --radius-lg: 22px;
   --radius-pill: 999px;
@@ -186,6 +193,10 @@
   --globe-shade-light: rgba(255, 244, 214, 0.14);
   --globe-shade-dark: rgba(2, 10, 18, 0.72);
   --globe-correct: #a8c47c;
+
+  --chart-track: #3d2f26;
+  --chart-bar: #55523f;
+  --chart-bar-on: #a8c47c;
 }
 
 /* ============ base ============ */
