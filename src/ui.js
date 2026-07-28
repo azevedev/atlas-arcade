@@ -410,18 +410,22 @@ export function createUI() {
 
     updateHud(h) {
       els.score.textContent = h.score.toLocaleString();
-      if (h.mode === "arcade") {
+      // Branch on the rules, not the mode: easy arcade has no lives but does
+      // have a length, so it wants the daily's progress counter, and showing it
+      // three empty life diamonds was just confusing.
+      const hasLives = h.lives != null;
+      const hasLength = h.total != null;
+      if (hasLives) {
         const total = 3;
         let s = "";
         // plain glyphs (not emoji) so the theme's --accent/ink colors apply
         for (let i = 0; i < total; i++)
           s += i < h.lives ? "◆" : `<span class="dead">◇</span>`;
         els.lives.innerHTML = s;
-        els.lives.hidden = false;
-        els.progress.hidden = true;
-      } else {
-        els.lives.hidden = true;
-        els.progress.hidden = false;
+      }
+      els.lives.hidden = !hasLives;
+      els.progress.hidden = !hasLength;
+      if (hasLength) {
         els.progress.textContent = `${Math.min(h.index + 1, h.total)} / ${h.total}`;
       }
       if (h.multiplier > 1) {

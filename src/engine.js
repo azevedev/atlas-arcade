@@ -47,7 +47,9 @@ export class Engine {
     this.qStart = performance.now();
     this.hintsUsed = 0;
     this.wrongs = 0;
-    this.plan = hintPlan(q);
+    // Hard runs without hints at all, so the plan is empty and the button
+    // disables itself through the usual setHintCount path.
+    this.plan = this.cfg.hints === false ? [] : hintPlan(q);
     this.planPos = 0;
     this.guessNorms = new Set();
     this.guessList = [];
@@ -105,7 +107,9 @@ export class Engine {
       this._grade(true, namePoints(this.hintsUsed, this.wrongs));
     } else {
       this.wrongs++;
-      this.lives -= 1;
+      // Easy has no lives: a wrong guess still costs points and breaks the
+      // combo, it just cannot end the run.
+      if (this.cfg.lives != null) this.lives -= 1;
       this.streak = 0;
       this.guessNorms.add(n);
       this.guessList.push(value);
@@ -114,7 +118,7 @@ export class Engine {
       this.view.setGuesses(this.guessList, this.guessNorms);
       this.view.setPoints(namePoints(this.hintsUsed, this.wrongs));
       this.view.updateHud(this._hud());
-      if (this.lives <= 0) this._grade(false, 0, { gameOver: true });
+      if (this.cfg.lives != null && this.lives <= 0) this._grade(false, 0, { gameOver: true });
       else this.view.refocusAnswer();
     }
   }
@@ -149,9 +153,12 @@ export class Engine {
   _skip() {
     if (this.done) return;
     this.streak = 0;
-    if (this.cfg.mode === "arcade") this.lives -= 1;
+    if (this.cfg.mode === "arcade" && this.cfg.lives != null) this.lives -= 1;
     sfx.wrong();
-    this._grade(false, 0, { skipped: true, gameOver: this.lives <= 0 });
+    this._grade(false, 0, {
+      skipped: true,
+      gameOver: this.cfg.lives != null && this.lives <= 0,
+    });
   }
 
   async _grade(correct, points, extra = {}) {
@@ -197,7 +204,8 @@ export class Engine {
     this.index += 1;
     const finished =
       extra.gameOver ||
-      (this.cfg.queue !== undefined && this.index >= this.cfg.queue.length);
+      (this.cfg.queue !== undefined && this.index >= this.cfg.queue.length) ||
+      (this.cfg.queue === undefined && this.cfg.total != null && this.index >= this.cfg.total);
     if (finished) this._end(!!extra.gameOver);
     else this._serve();
   }
@@ -209,6 +217,7 @@ export class Engine {
     if (gameOver) sfx.gameover();
     this.cfg.onEnd({
       mode: this.cfg.mode,
+      difficulty: this.cfg.difficulty,
       score: this.score,
       results: this.results,
       gameOver,

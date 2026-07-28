@@ -35,7 +35,7 @@ export const categoryBlurb = (k) => t(`cat.${k}Blurb`);
 // returned a random country, which is exactly when a repeat was most likely.
 //
 // Returns null when nothing is left, so the caller can decide what that means.
-function pickCountry(rng, { tierWeights, exclude, filter } = {}) {
+function pickCountry(rng, { tierWeights, exclude, filter, mode } = {}) {
   const usable = (arr) => {
     const a = filter ? arr.filter(filter) : arr;
     return exclude && exclude.size ? a.filter((c) => !exclude.has(c.ccn3)) : a;
@@ -44,9 +44,9 @@ function pickCountry(rng, { tierWeights, exclude, filter } = {}) {
   if (!all.length) return null;
 
   const pools = {
-    easy: usable(tierPool("easy")),
-    medium: usable(tierPool("medium")),
-    hard: usable(tierPool("hard")),
+    easy: usable(tierPool("easy", mode)),
+    medium: usable(tierPool("medium", mode)),
+    hard: usable(tierPool("hard", mode)),
   };
   // only weight tiers that still have someone left in them
   const weights = ["easy", "medium", "hard"]
@@ -84,42 +84,64 @@ function buildQuestion(type, country, rng, forceClue = null) {
 }
 
 // how a category maps to (question type, forced clue, country-pool filter)
+// `mode` is the difficulty dimension the question will test, which is not the
+// same as the category: a mixed round asks a country question without knowing
+// yet whether it will show a flag or a shape, so it falls back to the overall
+// tier by leaving mode undefined.
 function categorySpec(category, rng) {
   switch (category) {
     case "flag":
-      return { type: "country", forceClue: "flag", filter: null };
+      return { type: "country", forceClue: "flag", filter: null, mode: "flag" };
     case "shape":
-      return { type: "country", forceClue: "shape", filter: (c) => c.shapeClue && c.feature };
+      return { type: "country", forceClue: "shape", filter: (c) => c.shapeClue && c.feature, mode: "shape" };
     case "capital":
-      return { type: "capital", forceClue: null, filter: null };
+      return { type: "capital", forceClue: null, filter: null, mode: "capital" };
     case "locate":
-      return { type: "locate", forceClue: null, filter: null };
-    default:
-      return { type: weightedPick(TYPE_WEIGHTS, rng), forceClue: null, filter: null };
+      return { type: "locate", forceClue: null, filter: null, mode: "locate" };
+    default: {
+      const type = weightedPick(TYPE_WEIGHTS, rng);
+      const mode = type === "capital" ? "capital" : type === "locate" ? "locate" : undefined;
+      return { type, forceClue: null, filter: null, mode };
+    }
   }
 }
 
 // Endless arcade: difficulty ramps as the run goes on. `category` restricts the type.
-export function arcadeGenerator(rng, category = "mixed") {
+// How each difficulty weights the tiers. Easy stays on countries a player is
+// likely to know, hard drops the easy tier entirely, and normal keeps the
+// original ramp that gets harder as the run goes on.
+export const DIFFICULTIES = ["easy", "normal", "hard"];
+
+function tierWeightsFor(difficulty, index) {
+  if (difficulty === "easy") {
+    return { easy: 8, medium: Math.min(2, 0.4 + index * 0.06), hard: 0 };
+  }
+  if (difficulty === "hard") {
+    return { easy: 0, medium: Math.max(1, 4 - index * 0.12), hard: 2 + index * 0.18 };
+  }
+  return {
+    easy: Math.max(0.5, 6 - index * 0.25),
+    medium: 2.5 + index * 0.15,
+    hard: Math.max(0.3, index * 0.22 - 0.8),
+  };
+}
+
+export function arcadeGenerator(rng, category = "mixed", difficulty = "normal") {
   // Every country seen this run, not a sliding window: a country asked once
   // does not come back until the player starts a new match. Shared across
   // question types, so being shown France's flag also retires France as a
   // capital or locate question for the rest of the run.
   const used = new Set();
   return function next(index) {
-    const tierWeights = {
-      easy: Math.max(0.5, 6 - index * 0.25),
-      medium: 2.5 + index * 0.15,
-      hard: Math.max(0.3, index * 0.22 - 0.8),
-    };
+    const tierWeights = tierWeightsFor(difficulty, index);
     const spec = categorySpec(category, rng);
-    let country = pickCountry(rng, { tierWeights, exclude: used, filter: spec.filter });
+    let country = pickCountry(rng, { tierWeights, exclude: used, filter: spec.filter, mode: spec.mode });
     if (!country) {
       // Arcade is endless, so a long enough run can exhaust the pool. Nobody is
       // getting through 194 questions on three lives, but the run must keep
       // going rather than break, so start a fresh cycle.
       used.clear();
-      country = pickCountry(rng, { tierWeights, filter: spec.filter });
+      country = pickCountry(rng, { tierWeights, filter: spec.filter, mode: spec.mode });
     }
     used.add(country.ccn3);
     return buildQuestion(spec.type, country, rng, spec.forceClue);
@@ -138,7 +160,7 @@ export function dailyQueue(rng, n = 10) {
     const weights = { easy: 0, medium: 0, hard: 0 };
     weights[tier] = 1;
     const spec = categorySpec("mixed", rng);
-    const country = pickCountry(rng, { tierWeights: weights, exclude: used, filter: spec.filter });
+    const country = pickCountry(rng, { tierWeights: weights, exclude: used, filter: spec.filter, mode: spec.mode });
     used.add(country.ccn3);
     return buildQuestion(spec.type, country, rng, spec.forceClue);
   });

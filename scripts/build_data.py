@@ -17,6 +17,7 @@ Run:  python3 scripts/build_data.py
 Then: scripts/fetch_flags.sh   (downloads flag SVGs listed in scripts/cache/flags-list.txt)
 """
 import json, os, re, unicodedata, sys, urllib.request, urllib.parse
+import difficulty
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "scripts", "cache")
@@ -283,21 +284,40 @@ def main():
             "aliases": sorted(aliases),
         })
 
-    # difficulty tiers by population rank
-    ranked = sorted(out, key=lambda c: c["pop"], reverse=True)
-    n = len(ranked)
-    easy_cut, med_cut = 50, 122
-    for i, c in enumerate(ranked):
-        c["tier"] = "easy" if i < easy_cut else ("medium" if i < med_cut else "hard")
+    # Difficulty. A single population-ranked tier said Egypt was easy while its
+    # flag is a near-twin of Yemen's, so each mode is scored separately.
+    # See scripts/difficulty.py for the signals.
+    notability = difficulty.load_notability(CACHE)
+    cap_notability = difficulty.load_capital_notability(CACHE, norm)
+    flag_score = difficulty.flag_distinctiveness(out, os.path.join(ROOT, "assets", "flags"))
+    shape_score = difficulty.shape_spread(topo)
+    if not notability:
+        print("  WARNING: no notability cache, tiers fall back to population/area only")
+    if not flag_score:
+        print("  WARNING: no flags on disk, flag tiers lose their distinctiveness term")
+    difficulty.assign_tiers(out, notability, cap_notability, flag_score, shape_score, norm)
+
+    # a well-known small country is never the hardest of anything
     for c in out:
-        if c["cca3"] in FAMOUS and c["tier"] == "hard":
-            c["tier"] = "medium"
+        if c["cca3"] in FAMOUS:
+            for m, t in c["tiers"].items():
+                if t == "hard":
+                    c["tiers"][m] = "medium"
+
+    # legacy single tier, kept so anything not yet mode-aware still works
+    for c in out:
+        ranked_t = [c["tiers"][m] for m in difficulty.MODES]
+        c["tier"] = max(set(ranked_t), key=ranked_t.count)
 
     out.sort(key=lambda c: c["name"])
     data = {
         "generated": True,
         "count": len(out),
         "tiers": {t: sum(1 for c in out if c["tier"] == t) for t in ("easy", "medium", "hard")},
+        "modeTiers": {
+            m: {t: sum(1 for c in out if c["tiers"][m] == t) for t in ("easy", "medium", "hard")}
+            for m in difficulty.MODES
+        },
         "countries": out,
     }
 

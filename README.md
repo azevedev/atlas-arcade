@@ -20,7 +20,9 @@ switchable from the menu. Country names, capitals and regions are translated too
 and answers are accepted in either language.
 
 ## Modes
-- **Arcade** — 3 lives, endless, difficulty ramps up, local high score.
+- **Arcade** — pick a category and a difficulty. Easy has no lives and runs 15
+  questions; Normal and Hard give 3 lives and run endlessly, and Hard drops the
+  hints. Local high score per difficulty.
 - **Daily Challenge** — a fixed set of 10, the same for everyone that day (UTC), with a
   shareable emoji grid and a day streak.
 
@@ -51,7 +53,7 @@ Vanilla JS (ES modules) + D3 (orthographic globe) + TopoJSON, all vendored in
 
 - `src/` — game code (`globe`, `questions`, `engine`, `modes/*`, `ui`, …)
 - `sw.js` — service worker (offline + instant repeat loads)
-- `assets/data/countries.json` — trimmed country dataset (name, capital, lat/lng, tier)
+- `assets/data/countries.json` — trimmed country dataset (names, capitals, lat/lng, per-mode difficulty tiers)
 - `assets/geo/countries-{50m,110m}.json` — country shapes (world-atlas TopoJSON)
 - `assets/flags/*.svg` — one flag per country
 - `assets/social/*` — Open Graph card + PWA icons (rendered by `scripts/social/`)
@@ -63,7 +65,7 @@ The dataset is produced from open sources (world-atlas, mledoze/countries, Natur
 Earth capitals, a population list) and flags from flagcdn:
 
 ```bash
-python3 scripts/build_data.py   # -> assets/data/countries.json (+ geo)
+python3 scripts/build_data.py   # -> assets/data/countries.json (+ geo, difficulty tiers)
 bash    scripts/fetch_flags.sh  # -> assets/flags/*.svg
 ```
 

@@ -101,7 +101,13 @@
           <button class="back-link" id="arcade-back" data-i18n="picker.back">‹ Back</button>
           <div class="logo small">🕹️</div>
           <h2 class="cats-title" data-i18n="picker.title">Pick a mode</h2>
-          <p class="tagline" data-i18n="picker.sub">3 lives. Chase a high score.</p>
+          <div class="diff-row" role="group" data-i18n-aria="diff.group" aria-label="Difficulty">
+            <button type="button" class="diff-btn" data-diff="easy"   data-i18n="diff.easy">Easy</button>
+            <button type="button" class="diff-btn" data-diff="normal" data-i18n="diff.normal">Normal</button>
+            <button type="button" class="diff-btn" data-diff="hard"   data-i18n="diff.hard">Hard</button>
+          </div>
+          <p class="diff-note" id="diff-note"></p>
+
           <div class="cat-grid" id="arcade-cats"></div>
         </div>
       </section>

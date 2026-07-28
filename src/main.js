@@ -1,7 +1,7 @@
 // Bootstrap: load data, build the UI, wire the menu + results screens.
 import { loadData } from "./data.js";
 import { createUI } from "./ui.js";
-import { startArcade, arcadeBest, recordArcade } from "./modes/arcade.js";
+import { startArcade, arcadeBest, recordArcade, EASY_LENGTH } from "./modes/arcade.js";
 import { CATEGORIES, categoryLabel, categoryBlurb } from "./questions.js";
 import {
   startDaily,
@@ -55,6 +55,7 @@ async function boot() {
   let engine = null;
   let currentMode = "arcade";
   let currentCategory = "mixed";
+  let currentDifficulty = localStorage.getItem("aa_difficulty") || "normal";
   let lastDaily = null;
 
   // build the arcade category buttons (re-run on language change)
@@ -73,8 +74,28 @@ async function boot() {
   }
   buildCategories();
 
+  // ---- difficulty selector ----
+  const diffNote = $("diff-note");
+  function refreshDifficulty() {
+    for (const b of document.querySelectorAll(".diff-btn")) {
+      const on = b.dataset.diff === currentDifficulty;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    }
+    diffNote.textContent = t(`diff.${currentDifficulty}Note`, { n: EASY_LENGTH });
+  }
+  for (const b of document.querySelectorAll(".diff-btn")) {
+    b.onclick = () => {
+      currentDifficulty = b.dataset.diff;
+      localStorage.setItem("aa_difficulty", currentDifficulty);
+      refreshDifficulty();
+      refreshMenu();
+    };
+  }
+  refreshDifficulty();
+
   function refreshMenu() {
-    $("best-chip").textContent = `🏆 ${t("menu.best")}: ` + arcadeBest().toLocaleString();
+    $("best-chip").textContent = `🏆 ${t("menu.best")}: ` + arcadeBest(currentDifficulty).toLocaleString();
     $("streak-chip").textContent = `🔥 ${t("menu.streak")}: ` + dailyStreak();
     $("daily-sub").textContent = t(dailyPlayed() ? "menu.dailyPlayed" : "menu.dailyNew");
     $("mute-toggle").textContent = isMuted() ? `🔇 ${t("menu.muted")}` : `🔊 ${t("menu.sound")}`;
@@ -91,7 +112,7 @@ async function boot() {
     ui.showScreen("game");
     engine =
       mode === "arcade"
-        ? startArcade(ui.view, onEnd, category)
+        ? startArcade(ui.view, onEnd, category, currentDifficulty)
         : startDaily(ui.view, onEnd);
   }
 
@@ -107,8 +128,8 @@ async function boot() {
 
     let stats = `<span>✓ <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
     if (!isDaily) {
-      const best = recordArcade(summary.score);
-      stats += `<span>🏆 <b>${arcadeBest().toLocaleString()}</b> ${t("results.best")}</span>`;
+      const best = recordArcade(summary.score, summary.difficulty);
+      stats += `<span>🏆 <b>${arcadeBest(summary.difficulty).toLocaleString()}</b> ${t("results.best")}</span>`;
       if (best) stats += `<span>🎉 <b>${t("results.record")}</b></span>`;
     }
 
@@ -163,6 +184,26 @@ async function boot() {
     if (!setLang(getLang() === "pt-BR" ? "en" : "pt-BR")) return;
     applyStaticText();
     buildCategories();
+
+  // ---- difficulty selector ----
+  const diffNote = $("diff-note");
+  function refreshDifficulty() {
+    for (const b of document.querySelectorAll(".diff-btn")) {
+      const on = b.dataset.diff === currentDifficulty;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    }
+    diffNote.textContent = t(`diff.${currentDifficulty}Note`, { n: EASY_LENGTH });
+  }
+  for (const b of document.querySelectorAll(".diff-btn")) {
+    b.onclick = () => {
+      currentDifficulty = b.dataset.diff;
+      localStorage.setItem("aa_difficulty", currentDifficulty);
+      refreshDifficulty();
+      refreshMenu();
+    };
+  }
+  refreshDifficulty();
     refreshMenu();
   };
   $("theme-toggle").onclick = () => {

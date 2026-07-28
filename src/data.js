@@ -59,8 +59,13 @@ export const featureFor = (country) => (country ? FEATURES.get(country.ccn3) : n
 export const globeLand = () => globe.land;
 export const globeBorders = () => globe.borders;
 
-export function tierPool(tier) {
-  return DATA.countries.filter((c) => c.tier === tier);
+// Countries in a tier. `mode` is one of flag/shape/capital/locate; a country
+// can sit in different tiers per mode (Chad's flag is hard, finding Chad on the
+// globe is easy). Omit it for mixed questions, which use the overall tier.
+export function tierPool(tier, mode) {
+  return DATA.countries.filter((c) =>
+    (mode && c.tiers ? c.tiers[mode] : c.tier) === tier
+  );
 }
 
 // Center + spread of a region/subregion, derived from its member countries, so

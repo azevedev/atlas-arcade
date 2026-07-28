@@ -253,3 +253,28 @@
   /* 5 categories in a 2-col grid: the first spans both so no cell is left empty */
   #screen-arcade .cat-grid .cat-btn:first-child { grid-column: 1 / -1; }
 }
+
+/* ================= DIFFICULTY SELECTOR ================= */
+/* A segmented control rather than three separate buttons: the choices are
+   mutually exclusive and belong to one decision. */
+.diff-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+.diff-btn {
+  font-family: "Inter", sans-serif; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.03em; font-size: 0.8rem; padding: 11px 6px; min-height: 44px;
+  border: 2px solid var(--line); border-radius: var(--radius);
+  background: var(--sheen-quiet); color: var(--ink); cursor: pointer;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease;
+}
+.diff-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--line); }
+.diff-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
+.diff-btn.on { background: var(--sheen-primary); color: var(--on-accent); }
+.diff-note {
+  margin: 0 0 4px; color: var(--ink-soft); font-weight: 600;
+  font-size: 0.78rem; line-height: 1.35; min-height: 2.1em;
+}
