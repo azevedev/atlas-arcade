@@ -122,7 +122,12 @@ export class Engine {
     if (this.done || this.q.type !== "locate") return;
     const km = distanceKm(point, this.q.country.ll);
     const pts = locatePoints(km, this.hintsUsed);
-    this._grade(pts >= LOCATE_GOOD, pts, { distanceKm: km, guess: point, locate: true });
+    const good = pts >= LOCATE_GOOD;
+    // A locate resolves in one tap, so _grade never hears about the failure the
+    // way a typed guess does. Without this, missing the globe by half a world
+    // was the only wrong answer in the game that made no sound at all.
+    if (!good) sfx.wrong();
+    this._grade(good, pts, { distanceKm: km, guess: point, locate: true });
   }
 
   _skip() {

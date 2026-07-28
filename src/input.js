@@ -1,5 +1,6 @@
 // Autocomplete text input: live suggestions, keyboard nav, submit.
 import { suggest } from "./match.js";
+import { t, tRegion } from "./i18n.js";
 
 export class Autocomplete {
   constructor(inputEl, listEl, { onSubmit }) {
@@ -68,7 +69,7 @@ export class Autocomplete {
         this.list.replaceChildren(
           Object.assign(document.createElement("li"), {
             className: "ac-empty",
-            textContent: "No match",
+            textContent: t("game.noMatch"),
           })
         );
         this.list.hidden = false;
@@ -79,7 +80,7 @@ export class Autocomplete {
     this.list.innerHTML = this.items
       .map((it, i) => {
         const sub =
-          this.kind === "capital" ? "" : `<span class="ac-sub">${it.country.region || ""}</span>`;
+          this.kind === "capital" ? "" : `<span class="ac-sub">${tRegion(it.country.region)}</span>`;
         return `<li data-i="${i}" role="option"><span class="ac-name">${it.display}</span>${sub}</li>`;
       })
       .join("");

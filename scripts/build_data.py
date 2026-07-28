@@ -8,13 +8,15 @@ that the game loads at runtime, and copies the country geometry into `assets/geo
 Sources (downloaded once, cached in scripts/cache/):
   - world-atlas countries-50m.json     -> country shapes (TopoJSON, id = ISO numeric ccn3)
   - mledoze/countries countries.json   -> names, capital, region, altSpellings, area, latlng
+                                          and pt country names (translations.por)
   - Natural Earth 110m populated places -> capital lat/lng (adm0cap), matched by ISO3
   - samayo country-by-population        -> population, for difficulty tiering
+  - Wikidata SPARQL                     -> pt / pt-BR capital city names
 
 Run:  python3 scripts/build_data.py
 Then: scripts/fetch_flags.sh   (downloads flag SVGs listed in scripts/cache/flags-list.txt)
 """
-import json, os, re, unicodedata, sys, urllib.request
+import json, os, re, unicodedata, sys, urllib.request, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "scripts", "cache")
@@ -41,6 +43,118 @@ def norm(s):
     s = unicodedata.normalize("NFD", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
     return re.sub(r"[^a-z0-9]", "", s.lower())
+
+# ---- Wikidata: pt / pt-BR capital names -----------------------------------
+# mledoze has no capital translations, so the Portuguese capital names come from
+# Wikidata. Only capitals with no end date are taken, and each is matched to the
+# exact capital this dataset already uses (by English label), so countries with
+# several seats of government do not silently swap.
+WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"
+CAPITAL_QUERY = """
+SELECT ?iso3 ?en ?pt ?ptbr WHERE {
+  ?country wdt:P298 ?iso3 ; p:P36 ?st .
+  ?st ps:P36 ?capQ .
+  FILTER NOT EXISTS { ?st pq:P582 ?end }
+  ?capQ rdfs:label ?enL . FILTER(LANG(?enL)="en") BIND(STR(?enL) AS ?en)
+  OPTIONAL { ?capQ rdfs:label ?ptL . FILTER(LANG(?ptL)="pt")    BIND(STR(?ptL) AS ?pt) }
+  OPTIONAL { ?capQ rdfs:label ?brL . FILTER(LANG(?brL)="pt-br") BIND(STR(?brL) AS ?ptbr) }
+}
+"""
+
+def load_wikidata_capitals():
+    """{(iso3, norm(english capital)): {'pt':..., 'ptbr':...}}"""
+    path = os.path.join(CACHE, "wikidata_capitals.json")
+    if not os.path.exists(path):
+        print("  downloading wikidata_capitals.json ...")
+        url = WIKIDATA_SPARQL + "?" + urllib.parse.urlencode({"query": CAPITAL_QUERY})
+        req = urllib.request.Request(url, headers={
+            "Accept": "application/sparql-results+json",
+            "User-Agent": "atlas-arcade-data-build/1.0 (https://github.com/azevedev/atlas-arcade)",
+        })
+        with urllib.request.urlopen(req, timeout=120) as r, open(path, "wb") as f:
+            f.write(r.read())
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)["results"]["bindings"]
+    out = {}
+    for r in rows:
+        key = (r["iso3"]["value"], norm(r["en"]["value"]))
+        e = out.setdefault(key, {"pt": None, "ptbr": None})
+        for k in ("pt", "ptbr"):
+            if k in r and not e[k]:
+                e[k] = r[k]["value"]
+    return out
+
+# Curated pt-BR capital names. The bar is deliberately high: whenever Wikidata
+# has a Portuguese label it wins, even where the international spelling is also
+# common in Brazil. An earlier version of this list overrode a dozen perfectly
+# good Portuguese names (São Jorge -> "Saint George's", Bancoque -> "Bangkok")
+# on a judgement call about usage, which just left English on a Portuguese
+# screen. Both spellings are accepted as answers either way, so preferring the
+# Portuguese one costs the player nothing.
+#
+# What is left are the two cases the data genuinely gets wrong:
+#   1. The label is an artifact rather than a name ("Cidade de Bruxelas" is the
+#      disambiguated municipality; the city is Bruxelas).
+#   2. Wikidata's English label does not match the one this dataset uses, so the
+#      automatic join finds nothing at all (ATG, GNQ, MNG, NRU, NGA, SMR).
+CAPITAL_PT_PATCH = {
+    "BEL": "Bruxelas",
+    "KWT": "Cidade do Kuwait",   # pt label is the bare country name
+    "KIR": "Tarawa do Sul",      # pt-br label reads "Taraua"
+    # join misses, filled from the Portuguese Wikipedia
+    "ATG": "Saint John's",
+    "GNQ": "Malabo",
+    "MNG": "Ulan Bator",
+    "NRU": "Yaren",
+    "NGA": "Abuja",
+    "SMR": "São Marinho",
+}
+
+# mledoze's translations.por is EUROPEAN Portuguese, so the vowel before a nasal
+# is the giveaway (Polónia / Polônia, Quénia / Quênia). These are the Brazilian
+# forms, plus two outright typos in the source (Azerbeijão, São Vincente).
+NAME_PT_PATCH = {
+    "ARM": "Armênia", "AZE": "Azerbaijão", "BLR": "Bielorrússia", "BWA": "Botsuana",
+    "CZE": "Tchéquia", "DJI": "Djibuti", "SVN": "Eslovênia", "EST": "Estônia",
+    "YEM": "Iêmen", "IRN": "Irã", "LVA": "Letônia", "MKD": "Macedônia do Norte",
+    "MDG": "Madagascar", "MWI": "Malaui", "MCO": "Mônaco", "PER": "Peru",
+    "POL": "Polônia", "KEN": "Quênia", "ROU": "Romênia",
+    "VCT": "São Vicente e Granadinas", "TTO": "Trinidad e Tobago",
+    "TKM": "Turcomenistão", "VNM": "Vietnã", "ZWE": "Zimbábue",
+}
+
+# Portuguese article for "a capital DO Brasil" / "DA França" / "DE Portugal".
+# Shipped as data rather than inferred at runtime: the -a ending is a decent
+# guess but wrong often enough to matter (o Camboja, o Sri Lanka, a Costa Rica),
+# and a player noticing broken grammar is exactly the kind of thing that makes a
+# translation feel machine-made.
+ARTICLE_NONE = {  # takes no article at all
+    "AGO", "ATG", "AND", "BWA", "BLZ", "CPV", "CUB", "CYP", "DMA", "SLV", "GHA",
+    "GRD", "HND", "ISR", "KIR", "MDG", "MLT", "MHL", "NRU", "PRT", "WSM", "LCA",
+    "SGP", "STP", "TLS", "TON", "TUV", "UGA", "VUT", "MCO", "SMR", "OMN", "QAT",
+    "BHR", "KWT", "PLW", "FJI", "BRB", "HTI", "JAM", "MOZ", "NAM", "NIU",
+}
+ARTICLE_PLURAL_M = {"USA", "ARE"}                 # os Estados Unidos
+ARTICLE_PLURAL_F = {"PHL", "MDV", "BHS", "COM", "MHL", "SLB", "SYC"}  # as Filipinas
+ARTICLE_MASC = {  # ends in -a but masculine
+    "KHM", "LKA", "PAN", "CAN", "SUR", "ZWE",
+}
+ARTICLE_FEM = {  # feminine without an -a ending, so the suffix rule misses them
+    "ZAF", "CIV", "PRK", "KOR", "GIN", "GNQ", "GNB", "PNG", "COD", "VAT", "NLD",
+}
+
+def pt_article(cca3, name):
+    if cca3 in ARTICLE_NONE:
+        return None
+    if cca3 in ARTICLE_PLURAL_M:
+        return "os"
+    if cca3 in ARTICLE_PLURAL_F:
+        return "as"
+    if cca3 in ARTICLE_MASC:
+        return "o"
+    if cca3 in ARTICLE_FEM:
+        return "a"
+    return "a" if name.endswith("a") else "o"
 
 # ---- manual patches -------------------------------------------------------
 # capitals the Natural Earth 110m layer omits (lng, lat)
@@ -98,7 +212,9 @@ def main():
 
     pop_by = {norm(x["country"]): x["population"] for x in pop_raw if x.get("population")}
 
-    out, dropped = [], []
+    wiki_caps = load_wikidata_capitals()
+
+    out, dropped, untranslated = [], [], []
     for c in countries:
         if not c.get("unMember"):
             continue
@@ -123,9 +239,20 @@ def main():
 
         population = pop_by.get(norm(common)) or POPULATION_PATCH.get(cca3)
 
-        # aliases
+        # Portuguese country name (mledoze covers all 250) and capital (Wikidata,
+        # curated). Falls back to the English name so a gap is never a blank.
+        por = (c.get("translations") or {}).get("por") or {}
+        name_pt = NAME_PT_PATCH.get(cca3) or por.get("common") or common
+        wd = wiki_caps.get((cca3, norm(capital))) or {}
+        capital_pt = CAPITAL_PT_PATCH.get(cca3) or wd.get("ptbr") or wd.get("pt") or capital
+        if cca3 not in CAPITAL_PT_PATCH and not (wd.get("ptbr") or wd.get("pt")):
+            untranslated.append((cca3, capital))
+
+        # Aliases accept BOTH languages no matter which one is being played, so a
+        # player who knows a country by its English name is never marked wrong.
         aliases = set()
-        for a in [common, c["name"].get("official"), *(c.get("altSpellings") or [])]:
+        for a in [common, c["name"].get("official"), name_pt, por.get("official"),
+                  *(c.get("altSpellings") or [])]:
             n = norm(a)
             if n:
                 aliases.add(n)
@@ -139,7 +266,10 @@ def main():
             "cca2": c["cca2"].lower(),
             "cca3": cca3,
             "name": common,
+            "namePt": name_pt,
+            "artPt": pt_article(cca3, name_pt),
             "capital": capital,
+            "capitalPt": capital_pt,
             "region": c.get("region"),
             "subregion": c.get("subregion"),
             "ll": [round(lng, 3), round(lat, 3)],       # country centroid [lng,lat]
@@ -186,6 +316,11 @@ def main():
     nopop = [c["cca3"] for c in out if not c["pop"]]
     print(f"no shape (flag/capital/locate only): {noshape}")
     print(f"no population: {nopop}")
+    pt_same = [c["cca3"] for c in out if c["capitalPt"] == c["capital"]]
+    print(f"pt-BR capitals translated: {len(out) - len(pt_same)}/{len(out)} "
+          f"({len(pt_same)} identical to English, which is usually correct)")
+    if untranslated:
+        print("no Portuguese capital label found (fell back to English):", untranslated)
     if dropped:
         print("DROPPED:", dropped)
 

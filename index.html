@@ -47,7 +47,7 @@
     <!-- boot splash: shown until main.js has data + UI ready (see #app_loaded) -->
     <div id="boot" class="boot" role="status" aria-live="polite">
       <div class="boot-globe">🌍</div>
-      <p class="boot-text">Loading Atlas Arcade…</p>
+      <p class="boot-text" data-i18n="app.loading">Loading Atlas Arcade…</p>
     </div>
 
     <div id="app">
@@ -57,18 +57,18 @@
           <div class="menu-brand">
             <div class="logo">🌍</div>
             <h1 class="title">Atlas Arcade</h1>
-            <p class="tagline">Name the country. Find it on the globe.</p>
+            <p class="tagline" data-i18n="app.tagline">Name the country. Find it on the globe.</p>
           </div>
 
           <div class="menu-main">
             <div class="menu-buttons">
               <button class="btn btn-primary" id="play-arcade">
                 <span class="btn-emoji">🕹️</span>
-                <span class="btn-labels"><b>Arcade</b><small>3 lives · chase a high score</small></span>
+                <span class="btn-labels"><b data-i18n="menu.arcade">Arcade</b><small data-i18n="menu.arcadeSub">3 lives · chase a high score</small></span>
               </button>
               <button class="btn btn-secondary" id="play-daily">
                 <span class="btn-emoji">📅</span>
-                <span class="btn-labels"><b>Daily Challenge</b><small id="daily-sub">10 puzzles · new every day</small></span>
+                <span class="btn-labels"><b data-i18n="menu.daily">Daily Challenge</b><small id="daily-sub">10 puzzles · new every day</small></span>
               </button>
             </div>
 
@@ -77,16 +77,17 @@
               <span id="streak-chip" class="chip">🔥 Streak: 0</span>
               <button id="mute-toggle" class="chip chip-btn">🔊 Sound</button>
               <button id="theme-toggle" class="chip chip-btn">🌙 Theme</button>
+              <button id="lang-toggle" class="chip chip-btn">🌐 Português</button>
             </div>
 
             <details class="howto">
-              <summary>How to play</summary>
+              <summary data-i18n="menu.howto">How to play</summary>
               <ul>
-                <li><b>Name the country</b> from its flag, its shape, or where it lights up on the globe.</li>
-                <li><b>Name the capital</b>. A soft blob shows roughly where it sits.</li>
-                <li><b>Locate it</b> by tapping the spinning globe as close as you can. Pinch, scroll, or use the +/− buttons to zoom in on small countries.</li>
-                <li>Tap a flag or shape to see it full size.</li>
-                <li>Every question starts at full points. Hints and wrong guesses cost you. Chain correct answers for a <b>combo</b>.</li>
+                <li data-i18n-html="menu.howto1"><b>Name the country</b> from its flag, its shape, or where it lights up on the globe.</li>
+                <li data-i18n-html="menu.howto2"><b>Name the capital</b>. A soft blob shows roughly where it sits.</li>
+                <li data-i18n-html="menu.howto3"><b>Locate it</b> by tapping the spinning globe as close as you can. Pinch, scroll, or use the +/− buttons to zoom in on small countries.</li>
+                <li data-i18n-html="menu.howto4">Tap a flag or shape to see it full size.</li>
+                <li data-i18n-html="menu.howto5">Every question starts at full points. Hints and wrong guesses cost you. Chain correct answers for a <b>combo</b>.</li>
               </ul>
             </details>
           </div>
@@ -96,10 +97,10 @@
       <!-- ================= ARCADE CATEGORY PICKER ================= -->
       <section id="screen-arcade" class="screen">
         <div class="menu-card">
-          <button class="back-link" id="arcade-back">‹ Back</button>
+          <button class="back-link" id="arcade-back" data-i18n="picker.back">‹ Back</button>
           <div class="logo small">🕹️</div>
-          <h2 class="cats-title">Pick a mode</h2>
-          <p class="tagline">3 lives. Chase a high score.</p>
+          <h2 class="cats-title" data-i18n="picker.title">Pick a mode</h2>
+          <p class="tagline" data-i18n="picker.sub">3 lives. Chase a high score.</p>
           <div class="cat-grid" id="arcade-cats"></div>
         </div>
       </section>
@@ -107,10 +108,10 @@
       <!-- ================= GAME ================= -->
       <section id="screen-game" class="screen">
         <header class="hud">
-          <button class="hud-back" id="hud-back" aria-label="Back to menu">✕</button>
-          <div class="hud-score"><span class="hud-label">SCORE</span><span id="hud-score">0</span></div>
+          <button class="hud-back" id="hud-back" data-i18n-aria="hud.back" aria-label="Back to menu">✕</button>
+          <div class="hud-score"><span class="hud-label" data-i18n="hud.score">SCORE</span><span id="hud-score">0</span></div>
           <div class="hud-lives" id="hud-lives"></div>
-          <div class="hud-combo" id="hud-combo" hidden><span id="hud-mult">x2</span> combo</div>
+          <div class="hud-combo" id="hud-combo" hidden><span id="hud-mult">x2</span> <span data-i18n="hud.combo">combo</span></div>
           <div class="hud-progress" id="hud-progress" hidden></div>
         </header>
 
@@ -118,21 +119,21 @@
           <div class="globe-wrap">
             <canvas id="globe"></canvas>
             <div id="globe-label" class="globe-label" hidden></div>
-            <div id="locate-badge" class="locate-badge" hidden>tap the globe 👆</div>
+            <div id="locate-badge" class="locate-badge" hidden data-i18n="game.tapGlobe">tap the globe 👆</div>
             <!-- pinch works on touch and the wheel works on trackpads; these are
                  the discoverable + keyboard-reachable equivalent -->
             <!-- The stack is anchored to the bottom, so it grows upward. Order
                  matters: reset appears and disappears, so it sits at the top,
                  and + is last so the button you click repeatedly never moves
                  out from under your finger. -->
-            <div class="globe-zoom" role="group" aria-label="Globe zoom">
-              <button type="button" class="globe-zoom-btn zoom-reset" id="zoom-reset" aria-label="Reset zoom" hidden>1×</button>
-              <button type="button" class="globe-zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
-              <button type="button" class="globe-zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
+            <div class="globe-zoom" role="group" data-i18n-aria="zoom.group" aria-label="Globe zoom">
+              <button type="button" class="globe-zoom-btn zoom-reset" id="zoom-reset" data-i18n-aria="zoom.reset" aria-label="Reset zoom" hidden>1×</button>
+              <button type="button" class="globe-zoom-btn" id="zoom-out" data-i18n-aria="zoom.out" aria-label="Zoom out">−</button>
+              <button type="button" class="globe-zoom-btn" id="zoom-in" data-i18n-aria="zoom.in" aria-label="Zoom in">+</button>
             </div>
           </div>
 
-          <button type="button" class="clue-media" id="clue-media" hidden aria-label="Enlarge the clue">
+          <button type="button" class="clue-media" id="clue-media" hidden data-i18n-aria="clue.enlarge" aria-label="Enlarge the clue">
             <img id="clue-flag" class="clue-flag" alt="flag" hidden />
             <svg id="clue-shape" class="clue-shape" viewBox="0 0 260 260" hidden></svg>
           </button>
@@ -145,7 +146,7 @@
                 <div class="reveal-text" id="reveal-text"></div>
                 <div class="reveal-points" id="reveal-points"></div>
               </div>
-              <button class="reveal-continue" id="reveal-continue" hidden>Continue ›</button>
+              <button class="reveal-continue" id="reveal-continue" hidden data-i18n="game.continue">Continue ›</button>
             </div>
           </div>
         </div>
@@ -162,14 +163,14 @@
 
           <div class="answer-row" id="answer-row">
             <div class="ac">
-              <input id="answer" class="answer-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type your answer…" disabled />
+              <input id="answer" class="answer-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-i18n-ph="game.placeholder" placeholder="Type your answer…" disabled />
               <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
             </div>
           </div>
 
           <div class="controls">
-            <button class="btn btn-hint" id="btn-hint">💡 Hint <span id="hint-count" class="pill"></span></button>
-            <button class="btn btn-skip" id="btn-skip">Skip ⏭</button>
+            <button class="btn btn-hint" id="btn-hint">💡 <span data-i18n="game.hint">Hint</span> <span id="hint-count" class="pill"></span></button>
+            <button class="btn btn-skip" id="btn-skip"><span data-i18n="game.skip">Skip</span> ⏭</button>
           </div>
         </div>
       </section>
@@ -177,14 +178,14 @@
       <!-- ================= RESULTS ================= -->
       <section id="screen-results" class="screen">
         <div class="results-card">
-          <h2 id="results-title">Run over!</h2>
-          <div class="results-score"><span id="results-score">0</span><small>points</small></div>
+          <h2 id="results-title" data-i18n="results.over">Run over!</h2>
+          <div class="results-score"><span id="results-score">0</span><small data-i18n="results.points">points</small></div>
           <div id="results-stats" class="results-stats"></div>
           <pre id="share-grid" class="share-grid" hidden></pre>
           <div class="results-buttons">
-            <button class="btn btn-secondary" id="share-btn" hidden>📋 Share result</button>
-            <button class="btn btn-primary" id="again-btn">Play again</button>
-            <button class="btn btn-ghost" id="menu-btn">Menu</button>
+            <button class="btn btn-secondary" id="share-btn" hidden data-i18n="results.share">📋 Share result</button>
+            <button class="btn btn-primary" id="again-btn" data-i18n="results.again">Play again</button>
+            <button class="btn btn-ghost" id="menu-btn" data-i18n="results.menu">Menu</button>
           </div>
         </div>
       </section>
@@ -193,8 +194,8 @@
       <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
         <div class="lightbox-panel">
           <div class="lightbox-head">
-            <h2 class="lightbox-title" id="lightbox-title">Clue</h2>
-            <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close and keep playing">✕</button>
+            <h2 class="lightbox-title" id="lightbox-title" data-i18n="clue.title">Clue</h2>
+            <button type="button" class="lightbox-close" id="lightbox-close" data-i18n-aria="clue.close" aria-label="Close and keep playing">✕</button>
           </div>
           <div class="lightbox-body" id="lightbox-body"></div>
         </div>

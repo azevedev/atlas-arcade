@@ -1,5 +1,6 @@
 // Answer normalization, autocomplete suggestions and fuzzy acceptance.
 import { countries } from "./data.js";
+import { countryName, capitalName, getLang } from "./i18n.js";
 
 export function norm(s) {
   if (!s) return "";
@@ -32,14 +33,19 @@ function editDistance(a, b, max = 2) {
 
 let COUNTRY_INDEX = null; // [{display, norm, country}]
 let CAPITAL_INDEX = null;
+let INDEX_LANG = null; // the language the cached index was built for
 
 function build() {
-  if (COUNTRY_INDEX) return;
+  // Rebuild when the language changes: the cache is keyed on display names, so
+  // a stale index would keep suggesting the previous language's spellings.
+  if (COUNTRY_INDEX && INDEX_LANG === getLang()) return;
+  INDEX_LANG = getLang();
   COUNTRY_INDEX = [];
   CAPITAL_INDEX = [];
   for (const c of countries()) {
-    COUNTRY_INDEX.push({ display: c.name, norm: norm(c.name), country: c });
-    CAPITAL_INDEX.push({ display: c.capital, norm: norm(c.capital), country: c });
+    const n = countryName(c), cap = capitalName(c);
+    COUNTRY_INDEX.push({ display: n, norm: norm(n), country: c });
+    CAPITAL_INDEX.push({ display: cap, norm: norm(cap), country: c });
   }
   COUNTRY_INDEX.sort((a, b) => a.display.localeCompare(b.display));
   CAPITAL_INDEX.sort((a, b) => a.display.localeCompare(b.display));
@@ -69,13 +75,21 @@ export function accepts(input, country, kind) {
   const q = norm(input);
   if (!q) return false;
   if (kind === "capital") {
-    const target = norm(country.capital);
-    if (q === target) return true;
-    // accept dropping a trailing "city" and tolerate a 1-char typo on longer names
-    if (q === target.replace(/city$/, "")) return true;
-    return target.length >= 5 && editDistance(q, target, 1) <= 1;
+    // Both spellings are accepted whichever language is active, so knowing a
+    // capital as "Beijing" is never wrong while playing in Portuguese.
+    for (const target of new Set([norm(country.capital), norm(country.capitalPt)])) {
+      if (!target) continue;
+      if (q === target) return true;
+      // accept dropping a trailing "city" and tolerate a 1-char typo on longer names
+      if (q === target.replace(/city$/, "")) return true;
+      if (target.length >= 5 && editDistance(q, target, 1) <= 1) return true;
+    }
+    return false;
   }
+  // aliasSet already holds both languages (see scripts/build_data.py)
   if (country.aliasSet.has(q)) return true;
-  const nm = norm(country.name);
-  return nm.length >= 5 && editDistance(q, nm, 1) <= 1;
+  for (const nm of new Set([norm(country.name), norm(country.namePt)])) {
+    if (nm.length >= 5 && editDistance(q, nm, 1) <= 1) return true;
+  }
+  return false;
 }

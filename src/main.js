@@ -2,7 +2,7 @@
 import { loadData } from "./data.js";
 import { createUI } from "./ui.js";
 import { startArcade, arcadeBest, recordArcade } from "./modes/arcade.js";
-import { CATEGORIES } from "./questions.js";
+import { CATEGORIES, categoryLabel, categoryBlurb } from "./questions.js";
 import {
   startDaily,
   recordDaily,
@@ -12,6 +12,7 @@ import {
 } from "./modes/daily.js";
 import { buildShareText, copyShare } from "./share.js";
 import { toggleMute, isMuted } from "./audio.js";
+import { t, getLang, setLang, applyStaticText } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,9 +44,8 @@ async function boot() {
     if (boot) {
       boot.innerHTML =
         `<div class="boot-error"><div class="boot-globe">🌐</div>` +
-        `<p><b>Couldn't load the game.</b></p>` +
-        `<p>Check your connection and refresh. If you're opening the file directly, ` +
-        `run a local server first (<code>python3 -m http.server</code>).</p></div>`;
+        `<p><b>${t("boot.failed")}</b></p>` +
+        `<p>${t("boot.hint")} (<code>python3 -m http.server</code>).</p></div>`;
     }
     console.error("Atlas Arcade failed to load:", e);
     return;
@@ -57,27 +57,32 @@ async function boot() {
   let currentCategory = "mixed";
   let lastDaily = null;
 
-  // build the arcade category buttons
+  // build the arcade category buttons (re-run on language change)
   const catWrap = $("arcade-cats");
-  for (const [key, c] of Object.entries(CATEGORIES)) {
-    const b = document.createElement("button");
-    b.className = "btn cat-btn" + (key === "mixed" ? " btn-primary" : "");
-    b.innerHTML =
-      `<span class="btn-emoji">${c.emoji}</span>` +
-      `<span class="btn-labels"><b>${c.label}</b><small>${c.blurb}</small></span>`;
-    b.onclick = () => begin("arcade", key);
-    catWrap.appendChild(b);
+  function buildCategories() {
+    catWrap.replaceChildren();
+    for (const [key, c] of Object.entries(CATEGORIES)) {
+      const b = document.createElement("button");
+      b.className = "btn cat-btn" + (key === "mixed" ? " btn-primary" : "");
+      b.innerHTML =
+        `<span class="btn-emoji">${c.emoji}</span>` +
+        `<span class="btn-labels"><b>${categoryLabel(key)}</b><small>${categoryBlurb(key)}</small></span>`;
+      b.onclick = () => begin("arcade", key);
+      catWrap.appendChild(b);
+    }
   }
+  buildCategories();
 
   function refreshMenu() {
-    $("best-chip").textContent = "🏆 Best: " + arcadeBest().toLocaleString();
-    $("streak-chip").textContent = "🔥 Streak: " + dailyStreak();
-    $("daily-sub").textContent = dailyPlayed()
-      ? "played today · replay for fun"
-      : "10 puzzles · new every day";
-    $("mute-toggle").textContent = isMuted() ? "🔇 Muted" : "🔊 Sound";
+    $("best-chip").textContent = `🏆 ${t("menu.best")}: ` + arcadeBest().toLocaleString();
+    $("streak-chip").textContent = `🔥 ${t("menu.streak")}: ` + dailyStreak();
+    $("daily-sub").textContent = t(dailyPlayed() ? "menu.dailyPlayed" : "menu.dailyNew");
+    $("mute-toggle").textContent = isMuted() ? `🔇 ${t("menu.muted")}` : `🔊 ${t("menu.sound")}`;
     $("theme-toggle").textContent =
-      document.documentElement.dataset.theme === "dark" ? "☀️ Light" : "🌙 Dark";
+      document.documentElement.dataset.theme === "dark" ? `☀️ ${t("menu.light")}` : `🌙 ${t("menu.dark")}`;
+    const lang = $("lang-toggle");
+    lang.textContent = "🌐 " + t("menu.language");
+    lang.setAttribute("aria-label", t("menu.languageAria"));
   }
 
   function begin(mode, category = "mixed") {
@@ -95,18 +100,16 @@ async function boot() {
     const correct = summary.results.filter((r) => r.correct).length;
     const total = summary.results.length;
 
-    $("results-title").textContent = isDaily
-      ? "Daily complete!"
-      : summary.gameOver
-      ? "Run over!"
-      : "Nice run!";
+    $("results-title").textContent = t(
+      isDaily ? "results.daily" : summary.gameOver ? "results.over" : "results.nice"
+    );
     $("results-score").textContent = summary.score.toLocaleString();
 
-    let stats = `<span>✓ <b>${correct}/${total}</b> correct</span>`;
+    let stats = `<span>✓ <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
     if (!isDaily) {
       const best = recordArcade(summary.score);
-      stats += `<span>🏆 <b>${arcadeBest().toLocaleString()}</b> best</span>`;
-      if (best) stats += `<span>🎉 <b>New record!</b></span>`;
+      stats += `<span>🏆 <b>${arcadeBest().toLocaleString()}</b> ${t("results.best")}</span>`;
+      if (best) stats += `<span>🎉 <b>${t("results.record")}</b></span>`;
     }
 
     const shareEl = $("share-grid");
@@ -115,7 +118,7 @@ async function boot() {
       if (!lastDaily || lastDaily !== dailyKey()) {
         if (!dailyPlayed()) {
           const streak = recordDaily(summary);
-          stats += `<span>🔥 <b>${streak}</b> day streak</span>`;
+          stats += `<span>🔥 <b>${streak}</b> ${t(streak === 1 ? "results.streakOne" : "results.streak")}</span>`;
         }
         lastDaily = dailyKey();
       }
@@ -125,7 +128,7 @@ async function boot() {
       shareBtn.hidden = false;
       shareBtn.onclick = async () => {
         const ok = await copyShare(text);
-        ui.toast(ok ? "Copied to clipboard!" : "Copy failed");
+        ui.toast(t(ok ? "results.copied" : "results.copyFailed"));
       };
     } else {
       shareEl.hidden = true;
@@ -154,6 +157,14 @@ async function boot() {
     toggleMute();
     refreshMenu();
   };
+  $("lang-toggle").onclick = () => {
+    // Rebuilding is cheaper and far less bug-prone than trying to retranslate a
+    // live game, and the menu is the only place the toggle exists anyway.
+    if (!setLang(getLang() === "pt-BR" ? "en" : "pt-BR")) return;
+    applyStaticText();
+    buildCategories();
+    refreshMenu();
+  };
   $("theme-toggle").onclick = () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     applyTheme(next);
@@ -162,6 +173,7 @@ async function boot() {
     refreshMenu();
   };
 
+  applyStaticText();
   refreshMenu();
   hideBoot();
 }

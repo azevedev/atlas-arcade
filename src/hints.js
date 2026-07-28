@@ -7,9 +7,12 @@
 // "Located in Western Europe": in both cases the player can already see it.
 import { continentOf } from "./geo.js";
 import { makeRng, shuffle } from "./rng.js";
+import { t, tRegion, regionIn, countryName, capitalName, getLang } from "./i18n.js";
 
+// The answer in the language being played, so the letter hints spell the word
+// the player is actually being asked for.
 function answerText(q) {
-  return q.answerKind === "capital" ? q.country.capital : q.country.name;
+  return q.answerKind === "capital" ? capitalName(q.country) : countryName(q.country);
 }
 
 function firstLetter(q) {
@@ -17,15 +20,41 @@ function firstLetter(q) {
   return t ? t[0].toUpperCase() : "?";
 }
 
-function lengthPattern(q) {
-  const t = answerText(q);
-  return t
-    .split("")
-    .map((ch, i) => (i === 0 ? ch.toUpperCase() : ch === " " ? "  " : "_"))
-    .join(" ");
+// A run of spaces is not a readable word break: "Á _ _ _ _ _    _ _    _ _ _" is
+// impossible to count. Words are separated by a visible slash instead, so
+// "África do Sul" reads as three words of 6, 2 and 3 letters at a glance.
+const WORD_BREAK = "/";
+
+function joinWords(cells) {
+  return cells
+    .map((word) => word.join(" "))
+    .join(`  ${WORD_BREAK}  `);
+}
+
+// splits the answer into per-word arrays, running `cell` over each character
+function patternCells(word, cell) {
+  const out = [[]];
+  [...word].forEach((ch, i) => {
+    if (ch === " ") {
+      out.push([]);
+      return;
+    }
+    out[out.length - 1].push(cell(ch, i));
+  });
+  return out.filter((w) => w.length);
 }
 
 const LETTER = /[a-zà-öø-ÿ]/i;
+
+function lengthPattern(q) {
+  const word = answerText(q);
+  return joinWords(
+    patternCells(word, (ch, i) => {
+      if (!LETTER.test(ch)) return ch; // hyphens, apostrophes and dots are structure
+      return i === 0 ? ch.toUpperCase() : "_";
+    })
+  );
+}
 
 // Same skeleton as the pattern, with some letters filled in.
 //
@@ -37,8 +66,8 @@ const LETTER = /[a-zà-öø-ÿ]/i;
 // The pick is seeded from the answer itself, so it is stable for a given word
 // and every player sees the same letters in the Daily Challenge.
 function revealPattern(q) {
-  const t = answerText(q);
-  const chars = t.split("");
+  const word = answerText(q);
+  const chars = word.split("");
 
   const letterIdx = [];
   for (let i = 0; i < chars.length; i++) {
@@ -48,18 +77,17 @@ function revealPattern(q) {
 
   const firstIdx = letterIdx[0];
   const budget = Math.max(1, Math.floor(letterIdx.length / 2)); // never past half
-  const rest = shuffle(letterIdx.slice(1), makeRng(`reveal:${t}`));
+  const rest = shuffle(letterIdx.slice(1), makeRng(`reveal:${getLang()}:${word}`));
   const show = new Set(rest.slice(0, budget - 1));
   show.add(firstIdx);
 
-  return chars
-    .map((ch, i) => {
-      if (ch === " ") return "  ";
+  return joinWords(
+    patternCells(word, (ch, i) => {
       if (!LETTER.test(ch)) return ch; // hyphens and apostrophes are structure
       if (i === firstIdx) return ch.toUpperCase();
       return show.has(i) ? ch.toLowerCase() : "_";
     })
-    .join(" ");
+  );
 }
 
 // Facts the question puts on screen for free, before any hint is spent.
@@ -93,14 +121,14 @@ export function hintPlan(q) {
   const canShape = !!(c.shapeClue && c.feature);
 
   const hints = {
-    shape: { kind: "shape", label: "Shape revealed" },
-    flag: { kind: "flag", label: "Flag revealed" },
-    region: { kind: "region", scope: "region", label: `Region: ${c.region || "unknown"}` },
-    continent: { kind: "region", scope: "subregion", label: `Located in ${continentOf(c)}` },
-    first: { kind: "first", label: `Starts with “${firstLetter(q)}”` },
-    length: { kind: "length", label: `Pattern: ${lengthPattern(q)}` },
-    reveal: { kind: "length", label: `Letters: ${revealPattern(q)}` },
-    position: { kind: "position", label: "Location revealed on the globe" },
+    shape: { kind: "shape", label: t("hint.shape") },
+    flag: { kind: "flag", label: t("hint.flag") },
+    region: { kind: "region", scope: "region", label: t("hint.region", { region: tRegion(c.region) }) },
+    continent: { kind: "region", scope: "subregion", label: t("hint.continent", { region: tRegion(continentOf(c)), regionIn: regionIn(continentOf(c)) }) },
+    first: { kind: "first", label: t("hint.first", { letter: firstLetter(q) }) },
+    length: { kind: "length", label: t("hint.pattern", { pattern: lengthPattern(q) }) },
+    reveal: { kind: "length", label: t("hint.letters", { pattern: revealPattern(q) }) },
+    position: { kind: "position", label: t("hint.position") },
   };
 
   // Ordered weakest to strongest. Broad location always precedes exact location,

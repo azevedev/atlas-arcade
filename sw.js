@@ -1,6 +1,6 @@
 // Atlas Arcade service worker: offline play + instant repeat loads.
 // Bump CACHE when shipping new assets so clients pick them up.
-const CACHE = "atlas-arcade-v10";
+const CACHE = "atlas-arcade-v15";
 
 // App shell + data needed to boot. Paths are relative to the SW scope, so this
 // works whether the site is served at a domain root or a /repo/ subpath.
@@ -27,6 +27,7 @@ const PRECACHE = [
   "./src/audio.js",
   "./src/geo.js",
   "./src/rng.js",
+  "./src/i18n.js",
   "./src/share.js",
   "./src/modes/arcade.js",
   "./src/modes/daily.js",
