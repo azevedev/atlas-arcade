@@ -345,14 +345,15 @@ export class Globe {
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
 
-    // graticule (only when settled)
-    if (hi) {
-      ctx.beginPath();
-      path(this.graticule);
-      ctx.strokeStyle = c.graticule;
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-    }
+    // Graticule. Drawn on every frame, including while dragging: it used to be
+    // skipped for the ~2ms, but the grid is the main cue for how far the globe
+    // has actually turned, so losing it exactly when the player is turning the
+    // globe was the wrong trade.
+    ctx.beginPath();
+    path(this.graticule);
+    ctx.strokeStyle = c.graticule;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
 
     // Land. One path serves both the base fill and the clip for the land cover,
     // so the expensive land geometry is only walked once per frame. Clipping to

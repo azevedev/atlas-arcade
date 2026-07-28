@@ -121,10 +121,14 @@
             <div id="locate-badge" class="locate-badge" hidden>tap the globe 👆</div>
             <!-- pinch works on touch and the wheel works on trackpads; these are
                  the discoverable + keyboard-reachable equivalent -->
+            <!-- The stack is anchored to the bottom, so it grows upward. Order
+                 matters: reset appears and disappears, so it sits at the top,
+                 and + is last so the button you click repeatedly never moves
+                 out from under your finger. -->
             <div class="globe-zoom" role="group" aria-label="Globe zoom">
-              <button type="button" class="globe-zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
-              <button type="button" class="globe-zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
               <button type="button" class="globe-zoom-btn zoom-reset" id="zoom-reset" aria-label="Reset zoom" hidden>1×</button>
+              <button type="button" class="globe-zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
+              <button type="button" class="globe-zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
             </div>
           </div>
 

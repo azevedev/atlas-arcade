@@ -6,6 +6,7 @@
 // "Region: Asia", and "What is the capital of France?" does not offer
 // "Located in Western Europe": in both cases the player can already see it.
 import { continentOf } from "./geo.js";
+import { makeRng, shuffle } from "./rng.js";
 
 function answerText(q) {
   return q.answerKind === "capital" ? q.country.capital : q.country.name;
@@ -24,18 +25,39 @@ function lengthPattern(q) {
     .join(" ");
 }
 
-// Same skeleton as the pattern, with the vowels filled in. For a capital this is
-// the strongest hint available: location tells you nothing about the *name*,
-// but vowel positions narrow a half-remembered word down fast.
-const VOWEL = /[aeiouyáàâäãéèêëíìîïóòôöõúùûü]/i;
-function vowelPattern(q) {
+const LETTER = /[a-zà-öø-ÿ]/i;
+
+// Same skeleton as the pattern, with some letters filled in.
+//
+// Two rules keep this from handing over the answer. Revealed letters are picked
+// at random rather than by class: revealing every vowel gave away far too much,
+// since "Bissau" is four sixths vowel. And the total revealed, first letter
+// included, is capped at half the letters, rounded down.
+//
+// The pick is seeded from the answer itself, so it is stable for a given word
+// and every player sees the same letters in the Daily Challenge.
+function revealPattern(q) {
   const t = answerText(q);
-  return t
-    .split("")
+  const chars = t.split("");
+
+  const letterIdx = [];
+  for (let i = 0; i < chars.length; i++) {
+    if (LETTER.test(chars[i])) letterIdx.push(i);
+  }
+  if (!letterIdx.length) return lengthPattern(q);
+
+  const firstIdx = letterIdx[0];
+  const budget = Math.max(1, Math.floor(letterIdx.length / 2)); // never past half
+  const rest = shuffle(letterIdx.slice(1), makeRng(`reveal:${t}`));
+  const show = new Set(rest.slice(0, budget - 1));
+  show.add(firstIdx);
+
+  return chars
     .map((ch, i) => {
       if (ch === " ") return "  ";
-      if (i === 0) return ch.toUpperCase();
-      return VOWEL.test(ch) ? ch.toLowerCase() : "_";
+      if (!LETTER.test(ch)) return ch; // hyphens and apostrophes are structure
+      if (i === firstIdx) return ch.toUpperCase();
+      return show.has(i) ? ch.toLowerCase() : "_";
     })
     .join(" ");
 }
@@ -77,7 +99,7 @@ export function hintPlan(q) {
     continent: { kind: "region", scope: "subregion", label: `Located in ${continentOf(c)}` },
     first: { kind: "first", label: `Starts with “${firstLetter(q)}”` },
     length: { kind: "length", label: `Pattern: ${lengthPattern(q)}` },
-    vowels: { kind: "length", label: `Vowels: ${vowelPattern(q)}` },
+    reveal: { kind: "length", label: `Letters: ${revealPattern(q)}` },
     position: { kind: "position", label: "Location revealed on the globe" },
   };
 
@@ -90,8 +112,8 @@ export function hintPlan(q) {
     // Every location hint is dead here: the prompt names the country and the
     // globe already flew to it, and knowing exactly where a capital sits still
     // does not tell you its name. So the whole ladder is lexical, escalating
-    // from one letter, to the shape of the word, to its vowels.
-    order = ["first", "length", "vowels"];
+    // from one letter, to the shape of the word, to half of its letters.
+    order = ["first", "length", "reveal"];
   } else {
     order = ["region", "continent", "shape", "flag"];
   }
