@@ -42,32 +42,44 @@ const LIMB_WIDTH = 2.4;
 // detail comes from the vector coastline and borders drawn over the top.
 // ---------------------------------------------------------------------------
 const TEXTURE_URL = "./assets/geo/earth-texture.jpg";
-// Sampling buffer side. Reprojection cost is quadratic in this, so the buffer is
-// coarser while the globe is moving and sharpens once it settles: a drag frame
-// has to fit in 16ms, but the frame you actually stop and read can afford detail.
-//
-// Both are expressed as canvas pixels per sample rather than as a fixed count.
-// Fixed counts were tuned against a ~380px phone canvas, so on a 622px desktop
-// one the same buffer was stretched 1.6x further and the land cover visibly
-// broke into blocks the moment you grabbed the globe.
-const TERRAIN_PX_PER_SAMPLE_SETTLED = 1.27;
-const TERRAIN_PX_PER_SAMPLE_MOVING = 2.53;
+// Sampling buffer side, as canvas pixels per sample rather than a fixed count:
+// a fixed count tuned on a ~380px phone canvas gets stretched 1.6x further on a
+// 622px desktop one, which is what made the land cover break into blocks there.
+const TERRAIN_PX_PER_SAMPLE = 1.27;
 // Hard bounds. The ceiling is where the 1024x512 source texture runs out of
 // detail to give; the floor keeps the globe recognisable on a weak device.
-const TERRAIN_SAMPLES_MIN = 110;
+const TERRAIN_SAMPLES_MIN = 200;
 const TERRAIN_SAMPLES_MAX = 520;
 // Buffer sizes are quantised to this, because every change reallocates the
 // sampling canvas and its ImageData. Without it the adaptive loop below would
 // reallocate on almost every frame.
 const TERRAIN_SAMPLES_STEP = 20;
 
-// Frame budget for the whole moving render, in ms. Drag frames time themselves
-// and walk the sampling buffer toward the largest size that still fits, so a
-// fast desktop gets a sharp globe and a slow phone stays at 60fps without
-// either being guessed at from the user agent.
-const MOVING_BUDGET_MS = 13;
-const MOVING_HEADROOM_MS = 9;
+// Budget for the reprojection alone, in ms — NOT for the whole frame. Budgeting
+// the frame does not work: the vector land, borders and graticule are ~10ms of
+// it and no amount of dropped terrain resolution makes them cheaper, so the
+// buffer just shrank to its floor chasing a target it could never reach.
+const TERRAIN_BUDGET_MS = 7;
+const TERRAIN_HEADROOM_MS = 4.5;
 const DEG = 180 / Math.PI;
+const TAU = Math.PI * 2;
+
+// Polynomial atan2. Math.atan2 and Math.asin together were 83% of the
+// reprojection cost (6.4ms of 7.7ms at 300 samples), which is what forced the
+// resolution down in the first place. Max error here is 0.012 degrees against
+// a source texel of 0.35 degrees, so it is exact as far as the texture can tell.
+function fastAtan2(y, x) {
+  const ay = y < 0 ? -y : y;
+  const ax = x < 0 ? -x : x;
+  const hi = ay > ax ? ay : ax;
+  const lo = ay > ax ? ax : ay;
+  const a = lo / (hi + 1e-30);
+  const s = a * a;
+  let r = ((-0.0464964749 * s + 0.15931422) * s - 0.327622764) * s * a + a;
+  if (ay > ax) r = Math.PI / 2 - r;
+  if (x < 0) r = Math.PI - r;
+  return y < 0 ? -r : r;
+}
 
 export class Globe {
   constructor(canvas, { onPick, onInteract, onZoom } = {}) {
@@ -116,9 +128,9 @@ export class Globe {
     this._terrainCanvas = document.createElement("canvas");
     this._terrainCtx = this._terrainCanvas.getContext("2d", { willReadFrequently: true });
     this._terrainN = 0;
-    this._movingN = 0; // measured drag resolution, seeded on the first drag frame
-    this._movingNCap = TERRAIN_SAMPLES_MAX;
-    this._movingMs = 0;
+    this._samples = 0; // shared moving/settled resolution, tuned by _tuneTerrain
+    this._samplesCap = 0; // the most this canvas size can show
+    this._terrainMs = 0;
 
     const img = new Image();
     img.decoding = "async";
@@ -147,32 +159,38 @@ export class Globe {
     this._terrainPixels = new Uint32Array(this._terrainImage.data.buffer);
   }
 
-  // Buffer side for this frame, in samples. Quantised so the buffer is only
-  // reallocated when the size really moves.
-  _terrainSamples(hi, span) {
-    const quantise = (n) =>
-      clamp(
-        Math.round(n / TERRAIN_SAMPLES_STEP) * TERRAIN_SAMPLES_STEP,
-        TERRAIN_SAMPLES_MIN,
-        TERRAIN_SAMPLES_MAX
-      );
-    if (hi) return quantise(span / TERRAIN_PX_PER_SAMPLE_SETTLED);
-    // Seed the moving size from the canvas, then let the measured frame cost
-    // take over from there (see the tail of render()).
-    if (!this._movingN) this._movingN = quantise(span / TERRAIN_PX_PER_SAMPLE_MOVING);
-    return this._movingN;
+  // Buffer side for this frame, in samples. One resolution, used whether the
+  // globe is moving or still: a globe that visibly coarsens the moment you grab
+  // it is the artifact, and no drag-only resolution avoids it. Quantised so the
+  // buffer is only reallocated when the size really moves.
+  _terrainSamples(span) {
+    const want = clamp(
+      Math.round(span / TERRAIN_PX_PER_SAMPLE / TERRAIN_SAMPLES_STEP) * TERRAIN_SAMPLES_STEP,
+      TERRAIN_SAMPLES_MIN,
+      TERRAIN_SAMPLES_MAX
+    );
+    // The cap is what this canvas size can actually show; _samples is where the
+    // measured cost below has settled. Start at the cap and come down only if
+    // this machine cannot pay for it.
+    if (!this._samplesCap || this._samplesCap !== want) {
+      this._samplesCap = want;
+      this._samples = want;
+    }
+    return this._samples;
   }
 
-  // Feed a measured moving-frame duration back into the sampling resolution.
-  // Smoothed, so one janky frame (a GC pause, a background tab waking) does not
-  // drop the globe to mush.
+  // Feed a measured reprojection time back into the sampling resolution.
+  // Smoothed, so one janky frame (a GC pause, a tab waking) does not drop the
+  // globe to mush, and only fed from moving frames, which is where the cost has
+  // to fit inside a 16ms budget.
   _tuneTerrain(ms) {
-    this._movingMs = this._movingMs ? this._movingMs * 0.8 + ms * 0.2 : ms;
-    if (!this._movingN) return;
-    if (this._movingMs > MOVING_BUDGET_MS) {
-      this._movingN = Math.max(TERRAIN_SAMPLES_MIN, this._movingN - TERRAIN_SAMPLES_STEP);
-    } else if (this._movingMs < MOVING_HEADROOM_MS && this._movingN < this._movingNCap) {
-      this._movingN = Math.min(this._movingNCap, this._movingN + TERRAIN_SAMPLES_STEP);
+    this._terrainMs = this._terrainMs ? this._terrainMs * 0.8 + ms * 0.2 : ms;
+    if (this._terrainMs > TERRAIN_BUDGET_MS) {
+      this._samples = Math.max(TERRAIN_SAMPLES_MIN, this._samples - TERRAIN_SAMPLES_STEP);
+      this._terrainMs = 0; // re-measure at the new size rather than chasing the old one
+    } else if (this._terrainMs < TERRAIN_HEADROOM_MS && this._samples < this._samplesCap) {
+      this._samples = Math.min(this._samplesCap, this._samples + TERRAIN_SAMPLES_STEP);
+      this._terrainMs = 0;
     }
   }
 
@@ -198,6 +216,9 @@ export class Globe {
     const ux = -sinP * cosL, uy = -sinP * sinL, uz = cosP;
 
     const tw = tex.w, th = tex.h, tpx = tex.px;
+    // radians -> texel, hoisted out of the loop
+    const uScale = tw / TAU;
+    const vScale = th / Math.PI;
     // canvas px per buffer px, so buffer (i,j) maps back to the right screen
     // point. `span` is the box the buffer covers: the disc's own bounding box
     // while the whole sphere is on screen, so no samples are spent on the empty
@@ -220,9 +241,12 @@ export class Globe {
         const gy = Z * fy + X * ry + Y * uy;
         const gz = Z * fz + Y * uz;
 
-        // lng/lat -> texture pixel
-        let tu = ((Math.atan2(gy, gx) * DEG + 180) / 360) * tw;
-        let tv = ((90 - Math.asin(gz) * DEG) / 180) * th;
+        // lng/lat -> texture pixel. The row wants (90 - lat), which is acos(gz);
+        // taking it as atan2(|xy|, gz) rather than 90 - asin(gz) reuses the one
+        // approximation and keeps its accuracy uniform right up to the poles,
+        // where asin and any acos lookup table are at their worst.
+        let tu = (fastAtan2(gy, gx) + Math.PI) * uScale;
+        let tv = fastAtan2(Math.sqrt(gx * gx + gy * gy), gz) * vScale;
         tu = tu < 0 ? 0 : tu >= tw ? tw - 1 : tu | 0;
         tv = tv < 0 ? 0 : tv >= th ? th - 1 : tv | 0;
         out[k] = tpx[tv * tw + tu];
@@ -293,9 +317,9 @@ export class Globe {
         this.sphere
       )
       .translate([rect.width / 2, rect.height / 2]);
-    // canvas size changed, so the measured drag resolution no longer applies
-    this._movingN = 0;
-    this._movingMs = 0;
+    // canvas size changed, so the measured resolution no longer applies
+    this._samplesCap = 0;
+    this._terrainMs = 0;
     // fitExtent overwrites the scale, so remember the fitted size and put the
     // player's zoom back on top of it
     this._baseScale = this.projection.scale();
@@ -380,7 +404,6 @@ export class Globe {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     if (this.projection.scale() <= 0 || w < 20) return; // not sized yet
-    const t0 = hi ? 0 : performance.now();
     ctx.clearRect(0, 0, w, h);
 
     const cx = w / 2,
@@ -447,11 +470,15 @@ export class Globe {
     // upscale would blend the outermost land against the transparent samples
     // just outside the disc and fade the coastline there.
     const span = Math.min(Math.max(w, h), 2 * rad * 1.02);
-    // The ceiling for the adaptive drag resolution is the settled one: sharper
-    // than the frame you stop and read on would be wasted work.
-    this._movingNCap = this._terrainSamples(true, span);
-    const samples = this._terrainSamples(hi, span);
-    if (this._paintTerrain(cx, cy, rad, samples, span)) {
+    const samples = this._terrainSamples(span);
+    // Time the reprojection on its own. Timing the whole frame instead is what
+    // broke the previous version of this: terrain is ~2ms of a ~13ms frame, so
+    // the controller kept cutting the one thing it could control and bottomed
+    // out at the floor.
+    const tTerrain = hi ? 0 : performance.now();
+    const painted = this._paintTerrain(cx, cy, rad, samples, span);
+    if (!hi) this._tuneTerrain(performance.now() - tTerrain);
+    if (painted) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(this._terrainCanvas, cx - span / 2, cy - span / 2, span, span);
@@ -571,8 +598,6 @@ export class Globe {
       ctx.strokeStyle = c.ink;
       ctx.stroke();
     }
-
-    if (!hi) this._tuneTerrain(performance.now() - t0);
   }
 
   _visible(point) {
