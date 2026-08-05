@@ -17,11 +17,11 @@ const TYPE_WEIGHTS = [
 // Labels are resolved at call time, not module load, so switching language
 // rebuilds them without a reload.
 export const CATEGORIES = {
-  mixed: { key: "mixed", emoji: "🌐" },
-  flag: { key: "flag", emoji: "🏳️" },
-  shape: { key: "shape", emoji: "🗺️" },
-  capital: { key: "capital", emoji: "🏛️" },
-  locate: { key: "locate", emoji: "📍" },
+  mixed: { key: "mixed", icon: "globe" },
+  flag: { key: "flag", icon: "cat-flag" },
+  shape: { key: "shape", icon: "cat-shape" },
+  capital: { key: "capital", icon: "cat-capital" },
+  locate: { key: "locate", icon: "cat-locate" },
 };
 export const categoryLabel = (k) => t(`cat.${k}`);
 export const categoryBlurb = (k) => t(`cat.${k}Blurb`);

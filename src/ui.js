@@ -6,6 +6,7 @@ import { drawSilhouette } from "./silhouette.js";
 import { featureFor, countryAtPoint, regionArea } from "./data.js";
 import { formatTime } from "./scoring.js";
 import { t, countryName, capitalName } from "./i18n.js";
+import { iconEl } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -383,7 +384,8 @@ export function createUI() {
     },
 
     setStopwatch(ms) {
-      els.stopwatch.textContent = "⏱ " + formatTime(ms);
+      // the timer icon is a sibling in the markup, so this stays a pure text write
+      els.stopwatch.textContent = formatTime(ms);
     },
     setPoints(pts) {
       if (pts == null) {
@@ -398,10 +400,14 @@ export function createUI() {
       ac.setExclude(normSet || new Set());
       els.guesses.replaceChildren(
         ...(list || []).map((v) => {
-          // textContent (not innerHTML): guesses are raw user input, never trust them.
+          // textContent on the name (not innerHTML): guesses are raw user input,
+          // never trust them.
           const span = document.createElement("span");
           span.className = "guess";
-          span.textContent = "✗ " + v;
+          const name = document.createElement("span");
+          name.className = "guess-name";
+          name.textContent = v;
+          span.append(iconEl("close"), name);
           return span;
         })
       );
@@ -490,7 +496,7 @@ export function createUI() {
 
         const answer = q.answerKind === "capital" ? capitalName(c) : countryName(c);
         els.reveal.className = "reveal " + (res.correct ? "ok" : "bad");
-        els.revealMark.textContent = res.correct ? "✓" : "✕";
+        els.revealMark.replaceChildren(iconEl(res.correct ? "check" : "close"));
         if (q.type === "locate") {
           els.revealText.innerHTML = res.correct
             ? `<b>${countryName(c)}</b>`

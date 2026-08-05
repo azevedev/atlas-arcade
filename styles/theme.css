@@ -256,6 +256,28 @@ canvas:focus-visible,
   outline-offset: 3px;
 }
 
+/* ============ icons ============ */
+/* Phosphor, as inline <symbol>s at the top of index.html. Sized in em and
+   filled with currentColor, so an icon inherits the size and the theme colour
+   of whatever it sits in and needs no per-site rule. Regenerate the sprite
+   with scripts/build_icons.py. */
+.icon-sprite { display: none; }
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  /* never let an icon be squeezed by a long label beside it */
+  flex: none;
+  /* only matters in the non-flex contexts; sits the glyph on the text baseline */
+  vertical-align: -0.135em;
+}
+/* The three display globes. Phosphor draws to the edge of its box where the
+   emoji it replaced sat inset, so they need the extra 15% to hold the same
+   optical weight against the type beside them. */
+.boot-globe .icon,
+.logo .icon,
+.triumph-mark .icon { font-size: 1.15em; }
+
 /* ============ screens ============ */
 .screen { position: absolute; inset: 0; display: none; overflow: auto; }
 .screen.active { display: flex; }
@@ -284,6 +306,10 @@ canvas:focus-visible,
   gap: 12px;
   justify-content: center;
 }
+/* An icon set next to an uppercase 800-weight label needs to run a little
+   larger than the cap height or it reads as a stray mark. Scoped to direct
+   children so the big .btn-icon slot keeps its own size. */
+.btn > .icon { font-size: 1.3em; }
 .btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-hard-lift); filter: brightness(1.03); }
 .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--line); filter: brightness(0.98); }
 .btn:disabled {
@@ -305,6 +331,10 @@ canvas:focus-visible,
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   background: var(--sheen-quiet);
   color: var(--ink);
   border: 2px solid var(--line);
@@ -313,6 +343,8 @@ canvas:focus-visible,
   box-shadow: 0 3px 0 var(--line);
   transition: transform 0.11s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.11s ease;
 }
+/* the label is uppercase and small here, so a 1em icon reads as an afterthought */
+.chip .icon { font-size: 1.35em; }
 .chip-btn { cursor: pointer; }
 .chip-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--line); }
 .chip-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
@@ -344,7 +376,7 @@ canvas:focus-visible,
   transition: opacity 0.35s ease;
 }
 .boot-hide { opacity: 0; pointer-events: none; }
-.boot-globe { font-size: 3.6rem; line-height: 1; animation: bob 2.6s ease-in-out infinite; }
+.boot-globe { font-size: 3.6rem; line-height: 0; color: var(--accent-text); animation: bob 2.6s ease-in-out infinite; }
 .boot-text {
   font-family: "Archivo Black", sans-serif; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--ink); font-size: 0.9rem;

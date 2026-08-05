@@ -17,6 +17,7 @@ import { buildShare, copyShare } from "./share.js";
 import { toggleMute, isMuted } from "./audio.js";
 import { track, endingOf } from "./analytics.js";
 import { t, getLang, setLang, applyStaticText } from "./i18n.js";
+import { icon } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -47,7 +48,7 @@ async function boot() {
     const boot = $("boot");
     if (boot) {
       boot.innerHTML =
-        `<div class="boot-error"><div class="boot-globe">🌐</div>` +
+        `<div class="boot-error"><div class="boot-globe">${icon("globe")}</div>` +
         `<p><b>${t("boot.failed")}</b></p>` +
         `<p>${t("boot.hint")} (<code>python3 -m http.server</code>).</p></div>`;
     }
@@ -70,7 +71,7 @@ async function boot() {
       const b = document.createElement("button");
       b.className = "btn cat-btn" + (key === "mixed" ? " btn-primary" : "");
       b.innerHTML =
-        `<span class="btn-emoji">${c.emoji}</span>` +
+        `<span class="btn-icon">${icon(c.icon)}</span>` +
         `<span class="btn-labels"><b>${categoryLabel(key)}</b><small>${categoryBlurb(key)}</small></span>`;
         b.onclick = () => begin(currentMode === "worldcup" ? "worldcup" : "arcade", key);
       catWrap.appendChild(b);
@@ -99,15 +100,22 @@ async function boot() {
   refreshDifficulty();
 
   function refreshMenu() {
-    $("best-chip").textContent = `🏆 ${t("menu.best")}: ` + arcadeBest(currentDifficulty).toLocaleString();
-    $("streak-chip").textContent = `🔥 ${t("menu.streak")}: ` + dailyStreak();
+    // innerHTML, not textContent: every chip carries an icon. The only
+    // interpolations are translated strings and numbers we produced ourselves.
+    $("best-chip").innerHTML =
+      `${icon("trophy")} ${t("menu.best")}: ` + arcadeBest(currentDifficulty).toLocaleString();
+    $("streak-chip").innerHTML = `${icon("fire")} ${t("menu.streak")}: ` + dailyStreak();
     $("daily-sub").textContent = t(dailyPlayed() ? "menu.dailyPlayed" : "menu.dailyNew");
-    $("mute-toggle").textContent = isMuted() ? `🔇 ${t("menu.muted")}` : `🔊 ${t("menu.sound")}`;
-    $("theme-toggle").textContent =
-      document.documentElement.dataset.theme === "dark" ? `☀️ ${t("menu.light")}` : `🌙 ${t("menu.dark")}`;
+    $("mute-toggle").innerHTML = isMuted()
+      ? `${icon("muted")} ${t("menu.muted")}`
+      : `${icon("sound")} ${t("menu.sound")}`;
+    $("theme-toggle").innerHTML =
+      document.documentElement.dataset.theme === "dark"
+        ? `${icon("light")} ${t("menu.light")}`
+        : `${icon("dark")} ${t("menu.dark")}`;
     const lang = $("lang-toggle");
-    lang.textContent = "🌐 " + t("menu.language");
-    $("stats-toggle").textContent = "📊 " + t("menu.stats");
+    lang.innerHTML = `${icon("language")} ` + t("menu.language");
+    $("stats-toggle").innerHTML = `${icon("stats")} ` + t("menu.stats");
     lang.setAttribute("aria-label", t("menu.languageAria"));
   }
 
@@ -180,13 +188,13 @@ async function boot() {
     }
     $("results-score").textContent = summary.score.toLocaleString();
 
-    let stats = `<span>✓ <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
+    let stats = `<span>${icon("check")} <b>${correct}/${total}</b> ${t("results.correct")}</span>`;
     if (!isDaily) {
       const wc = summary.mode === "worldcup";
       const best = wc ? recordWorldCup(summary.score) : recordArcade(summary.score, summary.difficulty);
       const top = wc ? worldCupBest() : arcadeBest(summary.difficulty);
-      stats += `<span>🏆 <b>${top.toLocaleString()}</b> ${t("results.best")}</span>`;
-      if (best) stats += `<span>🎉 <b>${t("results.record")}</b></span>`;
+      stats += `<span>${icon("trophy")} <b>${top.toLocaleString()}</b> ${t("results.best")}</span>`;
+      if (best) stats += `<span>${icon("record")} <b>${t("results.record")}</b></span>`;
     }
 
     const shareEl = $("share-grid");
@@ -196,7 +204,7 @@ async function boot() {
       if (!lastDaily || lastDaily !== dailyKey()) {
         if (!dailyPlayed()) {
           const streak = recordDaily(summary);
-          stats += `<span>🔥 <b>${streak}</b> ${t(streak === 1 ? "results.streakOne" : "results.streak")}</span>`;
+          stats += `<span>${icon("fire")} <b>${streak}</b> ${t(streak === 1 ? "results.streakOne" : "results.streak")}</span>`;
         }
         lastDaily = dailyKey();
       }

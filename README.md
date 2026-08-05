@@ -68,6 +68,9 @@ Vanilla JS (ES modules) + D3 (orthographic globe) + TopoJSON, all vendored in
 
 - `src/` — game code (`globe`, `questions`, `engine`, `modes/*`, `ui`, …)
 - `sw.js` — service worker (offline + instant repeat loads)
+- icons — [Phosphor](https://phosphoricons.com) (MIT), inlined as `<symbol>`s in
+  `index.html` and referenced with `<use href="#i-…">`. No webfont and no CDN
+  request, so they work offline and take the theme colour from `currentColor`.
 - `assets/data/countries.json` — trimmed country dataset (names, capitals, lat/lng, per-mode difficulty tiers)
 - `assets/geo/countries-{50m,110m}.json` — country shapes (world-atlas TopoJSON)
 - `assets/flags/*.svg` — one flag per country
@@ -82,7 +85,12 @@ Earth capitals, a population list) and flags from flagcdn:
 ```bash
 python3 scripts/build_data.py   # -> assets/data/countries.json (+ geo, difficulty tiers)
 bash    scripts/fetch_flags.sh  # -> assets/flags/*.svg
+python3 scripts/build_icons.py  # -> the sprite in index.html + assets/social/favicon.svg
 ```
+
+To add an icon, put it in the `ICONS` map in `scripts/build_icons.py`, re-run the
+script, then reference it as `icon("name")` (or `iconEl("name")` for a DOM node)
+from `src/icons.js`.
 
 ## Data sources & licenses
 
@@ -93,3 +101,4 @@ Game code is MIT (see [LICENSE](./LICENSE)). Bundled data and assets keep their 
 - Capital coordinates: [Natural Earth](https://www.naturalearthdata.com/) populated places (public domain)
 - Flags: [flagcdn.com](https://flagcdn.com)
 - Fonts: Archivo Black & Inter (Open Font License)
+- Icons: [Phosphor Icons](https://github.com/phosphor-icons/core) (MIT)
