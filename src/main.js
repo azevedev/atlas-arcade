@@ -15,6 +15,7 @@ import {
 } from "./modes/daily.js";
 import { buildShare, copyShare } from "./share.js";
 import { toggleMute, isMuted } from "./audio.js";
+import { track, endingOf } from "./analytics.js";
 import { t, getLang, setLang, applyStaticText } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -113,6 +114,12 @@ async function boot() {
   function begin(mode, category = "mixed") {
     currentMode = mode;
     currentCategory = category;
+    // The Daily picks its own questions, so a category here would be a fiction.
+    track("run_start", {
+      mode,
+      category: mode === "daily" ? null : category,
+      difficulty: mode === "arcade" ? currentDifficulty : null,
+    });
     ui.showScreen("game");
     engine =
       mode === "worldcup"
@@ -126,6 +133,20 @@ async function boot() {
     const isDaily = summary.mode === "daily";
     const correct = summary.results.filter((r) => r.correct).length;
     const total = summary.results.length;
+
+    // Note this can fire more than once per run_start: carrying on into endless
+    // ends the run a second time. That is the honest shape of the mode, and the
+    // `ending` breakdown is what separates the two.
+    track("run_end", {
+      mode: summary.mode,
+      category: isDaily ? null : summary.category,
+      difficulty: summary.mode === "arcade" ? summary.difficulty : null,
+      ending: endingOf(summary),
+      score: summary.score,
+      correct,
+      total,
+      hints: summary.results.reduce((n, r) => n + (r.hints || 0), 0),
+    });
 
     // Four endings, and they should not look alike: ran out of lives, finished
     // the 15, finished the Daily, or answered every country the mode had left.
@@ -187,6 +208,8 @@ async function boot() {
       shareBtn.hidden = false;
       shareBtn.onclick = async () => {
         const ok = await copyShare(share.text);
+        // Tracked on the outcome, not the click: a copy that failed is not a share.
+        if (ok) track("daily_share", { correct, score: summary.score });
         ui.toast(t(ok ? "results.copied" : "results.copyFailed"));
       };
     } else {
@@ -266,7 +289,9 @@ async function boot() {
   // Endless carries the same run on rather than restarting it: same score, same
   // lives, same countries already asked.
   $("endless-btn").onclick = () => {
-    if (engine && engine.resumeEndless()) ui.showScreen("game");
+    if (!engine || !engine.resumeEndless()) return;
+    track("endless_start", { mode: currentMode, category: currentCategory });
+    ui.showScreen("game");
   };
   $("menu-btn").onclick = () => {
     ui.showScreen("menu");

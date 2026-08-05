@@ -26,12 +26,23 @@ and answers are accepted in either language.
 - **Daily Challenge** — a fixed set of 10, the same for everyone that day (UTC), with a
   shareable emoji grid and a day streak. Always drawn from the easy tier, so it
   stays winnable. Personal stats (played, perfect runs, streaks and a
-  correct-answer distribution) live on your device; nothing is uploaded.
+  correct-answer distribution) live on your device and are never uploaded.
 - **World Cup** — the same categories, restricted to the 74 nations that have played
   in a FIFA World Cup final tournament. 3 lives, no difficulty choice.
 
 Works on mobile, installs as a PWA ("Add to Home Screen"), and plays offline once loaded.
-No accounts, no tracking — scores live in your browser's `localStorage`.
+No accounts — scores live in your browser's `localStorage` and stay there.
+
+### Analytics
+
+The hosted site sends anonymous, cookieless usage counts to [Umami](https://umami.is):
+which mode, category and difficulty was started, and how each run ended (score,
+correct count, hints used). No cookies, no fingerprinting, no personal data, nothing
+that identifies a run as yours — so there is no consent banner. `Do Not Track` is
+honoured, and blocking the script leaves the game fully playable (`src/analytics.js`
+no-ops when the tracker is absent). Remove the `cloud.umami.is` tag from `index.html`
+to opt a fork out entirely; `data-domains` already limits it to the hosted origin, so
+local development and forks report nothing.
 
 ## Run it locally
 

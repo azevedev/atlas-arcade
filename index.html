@@ -43,6 +43,18 @@
     <!-- vendored libraries (globals: d3, topojson) -->
     <script src="./vendor/d3.v7.min.js"></script>
     <script src="./vendor/topojson-client.min.js"></script>
+
+    <!-- Analytics (Umami: cookieless, no personal data, so no consent banner).
+         data-domains keeps localhost and any fork's Pages site out of the
+         numbers; data-do-not-track honours the browser's DNT setting. Blocked
+         or offline, window.umami is simply absent and src/analytics.js no-ops. -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="a7daffd3-b63f-476b-80c4-8f9c0dd16e01"
+      data-domains="azevedev.github.io"
+      data-do-not-track="true"
+    ></script>
   </head>
   <body>
     <!-- boot splash: shown until main.js has data + UI ready (see #app_loaded) -->
