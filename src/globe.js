@@ -1,7 +1,8 @@
 // Rotatable 3D globe (D3 orthographic, canvas). Smooth to spin: a light 110m base,
 // simple lng/lat drag (trackpad-friendly) with inertia + keyboard control, a capped
-// pixel ratio, and graticule dropped while moving. Detailed 50m features are only
-// drawn for the (static) country highlight.
+// pixel ratio, and a land-cover buffer that trades resolution for frame time while
+// the globe moves. Detailed 50m features are only drawn for the (static) country
+// highlight.
 import { globeLand, globeBorders, featureFor } from "./data.js";
 
 export const cssVar = (name, fallback) =>
@@ -20,6 +21,13 @@ const MAX_ZOOM = 8;
 // HUD and panel leave behind.
 const GLOBE_INSET = 6;
 
+// How far the atmosphere halo reaches past the sphere, in sphere radii, and how
+// wide the limb stroke is. The sphere is fitted to leave room for both, because
+// anything drawn beyond the canvas is simply cut off — and a halo clipped by a
+// square canvas draws a visible box around the planet.
+const HALO_EXTENT = 1.09;
+const LIMB_WIDTH = 2.4;
+
 // ---------------------------------------------------------------------------
 // Terrain
 //
@@ -34,11 +42,31 @@ const GLOBE_INSET = 6;
 // detail comes from the vector coastline and borders drawn over the top.
 // ---------------------------------------------------------------------------
 const TEXTURE_URL = "./assets/geo/earth-texture.jpg";
-// Sampling buffer side. Reprojection cost is quadratic in this, so it drops
-// while the globe is moving and sharpens once it settles: a drag frame has to
-// fit in 16ms, but the frame you actually stop and read can afford detail.
-const TERRAIN_SAMPLES_MOVING = 150;
-const TERRAIN_SAMPLES_SETTLED = 300;
+// Sampling buffer side. Reprojection cost is quadratic in this, so the buffer is
+// coarser while the globe is moving and sharpens once it settles: a drag frame
+// has to fit in 16ms, but the frame you actually stop and read can afford detail.
+//
+// Both are expressed as canvas pixels per sample rather than as a fixed count.
+// Fixed counts were tuned against a ~380px phone canvas, so on a 622px desktop
+// one the same buffer was stretched 1.6x further and the land cover visibly
+// broke into blocks the moment you grabbed the globe.
+const TERRAIN_PX_PER_SAMPLE_SETTLED = 1.27;
+const TERRAIN_PX_PER_SAMPLE_MOVING = 2.53;
+// Hard bounds. The ceiling is where the 1024x512 source texture runs out of
+// detail to give; the floor keeps the globe recognisable on a weak device.
+const TERRAIN_SAMPLES_MIN = 110;
+const TERRAIN_SAMPLES_MAX = 520;
+// Buffer sizes are quantised to this, because every change reallocates the
+// sampling canvas and its ImageData. Without it the adaptive loop below would
+// reallocate on almost every frame.
+const TERRAIN_SAMPLES_STEP = 20;
+
+// Frame budget for the whole moving render, in ms. Drag frames time themselves
+// and walk the sampling buffer toward the largest size that still fits, so a
+// fast desktop gets a sharp globe and a slow phone stays at 60fps without
+// either being guessed at from the user agent.
+const MOVING_BUDGET_MS = 13;
+const MOVING_HEADROOM_MS = 9;
 const DEG = 180 / Math.PI;
 
 export class Globe {
@@ -88,6 +116,9 @@ export class Globe {
     this._terrainCanvas = document.createElement("canvas");
     this._terrainCtx = this._terrainCanvas.getContext("2d", { willReadFrequently: true });
     this._terrainN = 0;
+    this._movingN = 0; // measured drag resolution, seeded on the first drag frame
+    this._movingNCap = TERRAIN_SAMPLES_MAX;
+    this._movingMs = 0;
 
     const img = new Image();
     img.decoding = "async";
@@ -116,9 +147,38 @@ export class Globe {
     this._terrainPixels = new Uint32Array(this._terrainImage.data.buffer);
   }
 
+  // Buffer side for this frame, in samples. Quantised so the buffer is only
+  // reallocated when the size really moves.
+  _terrainSamples(hi, span) {
+    const quantise = (n) =>
+      clamp(
+        Math.round(n / TERRAIN_SAMPLES_STEP) * TERRAIN_SAMPLES_STEP,
+        TERRAIN_SAMPLES_MIN,
+        TERRAIN_SAMPLES_MAX
+      );
+    if (hi) return quantise(span / TERRAIN_PX_PER_SAMPLE_SETTLED);
+    // Seed the moving size from the canvas, then let the measured frame cost
+    // take over from there (see the tail of render()).
+    if (!this._movingN) this._movingN = quantise(span / TERRAIN_PX_PER_SAMPLE_MOVING);
+    return this._movingN;
+  }
+
+  // Feed a measured moving-frame duration back into the sampling resolution.
+  // Smoothed, so one janky frame (a GC pause, a background tab waking) does not
+  // drop the globe to mush.
+  _tuneTerrain(ms) {
+    this._movingMs = this._movingMs ? this._movingMs * 0.8 + ms * 0.2 : ms;
+    if (!this._movingN) return;
+    if (this._movingMs > MOVING_BUDGET_MS) {
+      this._movingN = Math.max(TERRAIN_SAMPLES_MIN, this._movingN - TERRAIN_SAMPLES_STEP);
+    } else if (this._movingMs < MOVING_HEADROOM_MS && this._movingN < this._movingNCap) {
+      this._movingN = Math.min(this._movingNCap, this._movingN + TERRAIN_SAMPLES_STEP);
+    }
+  }
+
   // Reproject the land cover texture onto the sphere, one sample per buffer
   // pixel. Returns false if the texture is not ready yet.
-  _paintTerrain(cx, cy, rad, N) {
+  _paintTerrain(cx, cy, rad, N, span) {
     const tex = this._tex;
     if (!tex) return false;
 
@@ -138,15 +198,20 @@ export class Globe {
     const ux = -sinP * cosL, uy = -sinP * sinL, uz = cosP;
 
     const tw = tex.w, th = tex.h, tpx = tex.px;
-    // canvas px per buffer px, so buffer (i,j) maps back to the right screen point
-    const step = (this.canvas.clientWidth || N) / N;
+    // canvas px per buffer px, so buffer (i,j) maps back to the right screen
+    // point. `span` is the box the buffer covers: the disc's own bounding box
+    // while the whole sphere is on screen, so no samples are spent on the empty
+    // corners, and the canvas once zooming pushes the limb off the edge.
+    const step = span / N;
+    const x0 = cx - span / 2;
+    const y0 = cy - span / 2;
 
     let k = 0;
     for (let j = 0; j < N; j++) {
-      const Y = (cy - (j + 0.5) * step) / rad;
+      const Y = (cy - (y0 + (j + 0.5) * step)) / rad;
       const Y2 = Y * Y;
       for (let i = 0; i < N; i++, k++) {
-        const X = ((i + 0.5) * step - cx) / rad;
+        const X = (x0 + (i + 0.5) * step - cx) / rad;
         const r2 = X * X + Y2;
         if (r2 >= 1) { out[k] = 0; continue; } // outside the disc
         const Z = Math.sqrt(1 - r2);
@@ -213,15 +278,24 @@ export class Globe {
     this.canvas.width = Math.round(rect.width * dpr);
     this.canvas.height = Math.round(rect.height * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Fit the sphere *plus* its halo and limb stroke, not just the sphere. A
+    // flat 10px margin was not enough once the canvas grew: the halo reaches
+    // rad * 1.09, which is 27px past the sphere on a 622px desktop canvas, so
+    // the glow was sliced off square against all four edges.
+    const half = Math.min(rect.width, rect.height) / 2;
+    const pad = Math.max(2, half - (half - LIMB_WIDTH / 2) / HALO_EXTENT);
     this.projection
       .fitExtent(
         [
-          [10, 10],
-          [rect.width - 10, rect.height - 10],
+          [pad, pad],
+          [rect.width - pad, rect.height - pad],
         ],
         this.sphere
       )
       .translate([rect.width / 2, rect.height / 2]);
+    // canvas size changed, so the measured drag resolution no longer applies
+    this._movingN = 0;
+    this._movingMs = 0;
     // fitExtent overwrites the scale, so remember the fitted size and put the
     // player's zoom back on top of it
     this._baseScale = this.projection.scale();
@@ -306,6 +380,7 @@ export class Globe {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     if (this.projection.scale() <= 0 || w < 20) return; // not sized yet
+    const t0 = hi ? 0 : performance.now();
     ctx.clearRect(0, 0, w, h);
 
     const cx = w / 2,
@@ -365,12 +440,21 @@ export class Globe {
     ctx.fill();
     ctx.save();
     ctx.clip();
-    const samples = hi ? TERRAIN_SAMPLES_SETTLED : TERRAIN_SAMPLES_MOVING;
-    if (this._paintTerrain(cx, cy, rad, samples)) {
-      const side = this.canvas.clientWidth;
+    // Cover the disc when the whole sphere is on screen, and fall back to the
+    // canvas once zoom pushes the limb past the edge — beyond that the buffer
+    // would be spending most of its samples off screen.
+    // The 1.02 is slack: with the box ending exactly on the limb, the bilinear
+    // upscale would blend the outermost land against the transparent samples
+    // just outside the disc and fade the coastline there.
+    const span = Math.min(Math.max(w, h), 2 * rad * 1.02);
+    // The ceiling for the adaptive drag resolution is the settled one: sharper
+    // than the frame you stop and read on would be wasted work.
+    this._movingNCap = this._terrainSamples(true, span);
+    const samples = this._terrainSamples(hi, span);
+    if (this._paintTerrain(cx, cy, rad, samples, span)) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(this._terrainCanvas, 0, 0, side, side);
+      ctx.drawImage(this._terrainCanvas, cx - span / 2, cy - span / 2, span, span);
     }
     ctx.restore();
 
@@ -487,6 +571,8 @@ export class Globe {
       ctx.strokeStyle = c.ink;
       ctx.stroke();
     }
+
+    if (!hi) this._tuneTerrain(performance.now() - t0);
   }
 
   _visible(point) {
