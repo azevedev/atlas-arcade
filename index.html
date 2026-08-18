@@ -12,9 +12,12 @@
       <script> below: anything earlier in the document is not covered by it.
 
       Built on `default-src 'none'`, so every capability is opted into by name.
-      The two third-party entries are both Umami: cloud.umami.is serves the
-      analytics script and receives the events. An injected script therefore has
-      nowhere to load from and nowhere to phone home to.
+      The two third-party entries are both Umami, and they are deliberately
+      different hosts: cloud.umami.is serves the script, gateway.umami.is
+      receives the events. Listing only the first is a policy that looks right
+      and silently drops every event — it cannot be caught on localhost either,
+      because data-domains makes the tracker no-op there. An injected script
+      still has nowhere to load from and nowhere to phone home to.
 
       style-src carries 'unsafe-inline' for one reason: the stats bars in
       src/main.js are drawn with a style="width:N%" attribute. Drop it here the
@@ -30,7 +33,7 @@
       img-src 'self' data:;
       font-src 'self';
       media-src 'self';
-      connect-src 'self' https://cloud.umami.is;
+      connect-src 'self' https://gateway.umami.is;
       manifest-src 'self';
       worker-src 'self';
       base-uri 'none';
