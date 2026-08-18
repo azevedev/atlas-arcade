@@ -1,6 +1,8 @@
 // Atlas Arcade service worker: offline play + instant repeat loads.
-// Bump CACHE when shipping new assets so clients pick them up.
-const CACHE = "atlas-arcade-v38";
+// Bump CACHE when shipping new assets so clients pick them up. This includes
+// index.html, which is precached: without a bump a returning player keeps the
+// old shell — and therefore the old Content-Security-Policy — indefinitely.
+const CACHE = "atlas-arcade-v39";
 
 // App shell + data needed to boot. Paths are relative to the SW scope, so this
 // works whether the site is served at a domain root or a /repo/ subpath.
