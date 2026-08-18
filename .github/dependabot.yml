@@ -1,0 +1,17 @@
+# Keeps the SHA-pinned actions in .github/workflows/pages.yml current: Dependabot
+# bumps the pin to the new commit and updates the trailing version comment, so
+# pinning costs nothing in maintenance.
+#
+# There is no npm entry: the game vendors its two libraries (vendor/d3.v7.min.js,
+# vendor/topojson-client.min.js) and has no package.json, so npm has nothing to
+# watch. Add one here the day a package.json appears.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci

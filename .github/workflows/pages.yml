@@ -15,6 +15,9 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# Actions are pinned to commit SHAs, not tags: a tag like @v4 is mutable and
+# can be moved onto malicious code by a compromised maintainer account.
+# Dependabot (.github/dependabot.yml) keeps the SHAs current.
 jobs:
   deploy:
     environment:
@@ -22,13 +25,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           # Static site — publish the repo root as-is (no build step).
           path: .
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

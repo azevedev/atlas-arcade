@@ -1,6 +1,6 @@
 // Atlas Arcade service worker: offline play + instant repeat loads.
 // Bump CACHE when shipping new assets so clients pick them up.
-const CACHE = "atlas-arcade-v37";
+const CACHE = "atlas-arcade-v38";
 
 // App shell + data needed to boot. Paths are relative to the SW scope, so this
 // works whether the site is served at a domain root or a /repo/ subpath.
@@ -14,6 +14,7 @@ const PRECACHE = [
   "./vendor/d3.v7.min.js",
   "./vendor/topojson-client.min.js",
   "./src/main.js",
+  "./src/sw-register.js",
   "./src/data.js",
   "./src/ui.js",
   "./src/engine.js",
@@ -34,6 +35,7 @@ const PRECACHE = [
   "./assets/social/favicon.svg",
   "./src/modes/arcade.js",
   "./src/modes/daily.js",
+  "./src/modes/worldcup.js",
   "./assets/data/countries.json",
   "./assets/geo/countries-50m.json",
   "./assets/geo/countries-110m.json",

@@ -3,6 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!--
+      Content-Security-Policy.
+
+      GitHub Pages serves static files and cannot set response headers, so the
+      policy is declared in markup. It must stay above the first <link> and
+      <script> below: anything earlier in the document is not covered by it.
+
+      Built on `default-src 'none'`, so every capability is opted into by name.
+      The two third-party entries are both Umami: cloud.umami.is serves the
+      analytics script and receives the events. An injected script therefore has
+      nowhere to load from and nowhere to phone home to.
+
+      style-src carries 'unsafe-inline' for one reason: the stats bars in
+      src/main.js are drawn with a style="width:N%" attribute. Drop it here the
+      day that becomes a CSS custom property.
+
+      Note that frame-ancestors, report-uri and sandbox are ignored in a meta
+      tag — they are header-only, and Pages cannot send headers.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'none';
+      script-src 'self' https://cloud.umami.is;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data:;
+      font-src 'self';
+      media-src 'self';
+      connect-src 'self' https://cloud.umami.is;
+      manifest-src 'self';
+      worker-src 'self';
+      base-uri 'none';
+      form-action 'none';
+    ">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Atlas Arcade: flags, capitals & the globe</title>
     <meta name="description" content="An arcade geography quiz: name countries from flags & shapes, guess capitals, and locate places on a spinning globe." />
 
@@ -291,14 +325,6 @@
     </div>
 
     <script type="module" src="./src/main.js"></script>
-    <script>
-      // Register the service worker for offline play + instant repeat loads.
-      // Kept out of the module so a load failure never blocks the game.
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js").catch(() => {});
-        });
-      }
-    </script>
+    <script src="./src/sw-register.js" defer></script>
   </body>
 </html>
