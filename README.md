@@ -35,14 +35,13 @@ No accounts — scores live in your browser's `localStorage` and stay there.
 
 ### Analytics
 
-The hosted site sends anonymous, cookieless usage counts to [Umami](https://umami.is):
-which mode, category and difficulty was started, and how each run ended (score,
-correct count, hints used). No cookies, no fingerprinting, no personal data, nothing
-that identifies a run as yours — so there is no consent banner. `Do Not Track` is
-honoured, and blocking the script leaves the game fully playable (`src/analytics.js`
-no-ops when the tracker is absent). Remove the `cloud.umami.is` tag from `index.html`
-to opt a fork out entirely; `data-domains` already limits it to the hosted origin, so
-local development and forks report nothing.
+The hosted site sends anonymous, cookieless page views and load-time metrics to
+[Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/). No cookies,
+no fingerprinting, no personal data, nothing that identifies a visit as yours — so
+there is no consent banner. Blocking the script leaves the game fully playable. The
+`src/analytics.js` wrapper is now inert (it checked for the old Umami tracker, which
+no longer loads); remove it and its `track(...)` calls if you fork and want the code
+gone entirely.
 
 ## Run it locally
 

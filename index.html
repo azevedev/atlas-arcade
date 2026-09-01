@@ -12,12 +12,12 @@
       <script> below: anything earlier in the document is not covered by it.
 
       Built on `default-src 'none'`, so every capability is opted into by name.
-      The two third-party entries are both Umami, and they are deliberately
-      different hosts: cloud.umami.is serves the script, gateway.umami.is
-      receives the events. Listing only the first is a policy that looks right
-      and silently drops every event — it cannot be caught on localhost either,
-      because data-domains makes the tracker no-op there. An injected script
-      still has nowhere to load from and nowhere to phone home to.
+      The two third-party entries are both Cloudflare Web Analytics, and they
+      are deliberately different hosts: static.cloudflareinsights.com serves the
+      beacon script, cloudflareinsights.com receives the events. Listing only
+      the first is a policy that looks right and silently drops every event. An
+      injected script still has nowhere to load from and nowhere to phone home
+      to.
 
       style-src carries 'unsafe-inline' for one reason: the stats bars in
       src/main.js are drawn with a style="width:N%" attribute. Drop it here the
@@ -28,12 +28,12 @@
     -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'none';
-      script-src 'self' https://cloud.umami.is;
+      script-src 'self' https://static.cloudflareinsights.com;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data:;
       font-src 'self';
       media-src 'self';
-      connect-src 'self' https://gateway.umami.is;
+      connect-src 'self' https://cloudflareinsights.com;
       manifest-src 'self';
       worker-src 'self';
       base-uri 'none';
@@ -81,17 +81,11 @@
     <script src="./vendor/d3.v7.min.js"></script>
     <script src="./vendor/topojson-client.min.js"></script>
 
-    <!-- Analytics (Umami: cookieless, no personal data, so no consent banner).
-         data-domains keeps localhost and any fork's Pages site out of the
-         numbers; data-do-not-track honours the browser's DNT setting. Blocked
-         or offline, window.umami is simply absent and src/analytics.js no-ops. -->
-    <script
-      defer
-      src="https://cloud.umami.is/script.js"
-      data-website-id="a7daffd3-b63f-476b-80c4-8f9c0dd16e01"
-      data-domains="azevedev.github.io"
-      data-do-not-track="true"
-    ></script>
+    <!-- Analytics (Cloudflare Web Analytics: cookieless, no personal data, so
+         no consent banner). Blocked or offline it simply fails to send. The
+         legacy src/analytics.js event wrapper is now inert: it checked
+         window.umami, which no longer loads. -->
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "d8da24149f5046e6b3b5a3e3b3052253"}'></script>
   </head>
   <body>
     <!-- Icon sprite. Inlined rather than fetched: it has to be there before the
